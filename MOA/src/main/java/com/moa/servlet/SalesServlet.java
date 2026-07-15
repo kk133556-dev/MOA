@@ -32,11 +32,21 @@ public class SalesServlet extends HttpServlet {
         String receiptImage = req.getParameter("receiptImage");
         if (receiptImage != null && receiptImage.isEmpty()) receiptImage = null;
 
+        // 세 항목은 선택 입력이라 안 보내면 0으로 처리해요.
+        int liquor = parseOrZero(req.getParameter("liquor"));
+        int fee = parseOrZero(req.getParameter("fee"));
+        int other = parseOrZero(req.getParameter("other"));
+
         try {
-            new SalesDAO().insert(storeId, total, card, cash, receiptImage);
+            new SalesDAO().insert(storeId, total, card, cash, receiptImage, liquor, fee, other);
             resp.sendRedirect("mypage.jsp");
         } catch (SQLException e) {
             throw new ServletException("매출 저장 중 DB 오류가 발생했어요.", e);
         }
+    }
+
+    private int parseOrZero(String s) {
+        if (s == null || s.trim().isEmpty()) return 0;
+        try { return Integer.parseInt(s.trim()); } catch (NumberFormatException e) { return 0; }
     }
 }

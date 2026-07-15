@@ -56,7 +56,10 @@
                     <input type="hidden" name="card" id="fCard">
                     <input type="hidden" name="cash" id="fCash">
                     <input type="hidden" name="receiptImage" id="fReceiptImage">
-                    <button type="submit" class="btn-moa w-100 justify-content-center">이 매출 저장하기</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="rescanBtn" class="btn-moa-outline" style="flex:1;"><i class="bi bi-arrow-counterclockwise"></i> 다시 스캔하기</button>
+                        <button type="submit" class="btn-moa" style="flex:2; justify-content:center;">이 매출 저장하기</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -92,7 +95,7 @@
                 }
                 resultCard.style.display = 'block';
                 if (!data.items || data.items.length === 0) {
-                    alert('영수증에서 품목을 인식하지 못했어요. 사진이 선명한지 확인하고 다시 시도해보세요.');
+                    alert('영수증에서 품목을 인식하지 못했어요.\n\n[진단용 - 이 내용을 캡처해서 알려주세요]\n' + (data.debugRawText || '(텍스트도 비어있음 - Vision이 아무것도 못 읽었어요)'));
                 }
                 renderItems(data.items || []);
                 document.getElementById('cardCell').textContent = data.cardEstimate != null ? data.cardEstimate : 0;
@@ -133,6 +136,17 @@
     }
 
     itemBody.addEventListener('input', recalc);
+
+    document.getElementById('rescanBtn').addEventListener('click', function () {
+        resultCard.style.display = 'none';
+        zone.style.display = 'block';
+        itemBody.innerHTML = '';
+        document.getElementById('totalCell').textContent = '0';
+        document.getElementById('cardCell').textContent = '0';
+        document.getElementById('cashCell').textContent = '0';
+        document.getElementById('fReceiptImage').value = '';
+        fileInput.value = ''; // 같은 파일을 다시 선택해도 change 이벤트가 또 발생하게 초기화
+    });
 
     document.getElementById('saveForm').addEventListener('submit', function () {
         document.getElementById('fTotal').value = document.getElementById('totalCell').textContent;

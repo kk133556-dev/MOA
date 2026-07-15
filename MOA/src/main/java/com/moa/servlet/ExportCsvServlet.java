@@ -60,9 +60,9 @@ public class ExportCsvServlet extends HttpServlet {
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("MOA 매출 리포트 - " + (storeName != null ? storeName : "") + " (월별 요약)");
         titleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
 
-        String[] headers = {"월", "총매출", "카드매출", "현금매출"};
+        String[] headers = {"월", "총매출", "카드매출", "현금매출", "주류매출", "수수료", "기타지출"};
         Row headerRow = sheet.createRow(2);
         for (int i = 0; i < headers.length; i++) {
             Cell c = headerRow.createCell(i);
@@ -70,41 +70,38 @@ public class ExportCsvServlet extends HttpServlet {
             c.setCellStyle(headerStyle);
         }
 
-        int startRow = 3; // 0-index 기준 데이터 시작 행
+        int startRow = 3;
         int r = startRow;
         for (Object[] row : monthly) {
             Row dataRow = sheet.createRow(r);
             dataRow.createCell(0).setCellValue((String) row[0]);
-            Cell total = dataRow.createCell(1); total.setCellValue((Integer) row[1]); total.setCellStyle(moneyStyle);
-            Cell card = dataRow.createCell(2); card.setCellValue((Integer) row[2]); card.setCellStyle(moneyStyle);
-            Cell cash = dataRow.createCell(3); cash.setCellValue((Integer) row[3]); cash.setCellStyle(moneyStyle);
+            for (int col = 1; col <= 6; col++) {
+                Cell c = dataRow.createCell(col);
+                c.setCellValue((Integer) row[col]);
+                c.setCellStyle(moneyStyle);
+            }
             r++;
         }
-        int endRow = r - 1; // 마지막 데이터 행 (0-index)
+        int endRow = r - 1;
 
-        // 합계 행 - 진짜 엑셀 SUM 함수로 계산돼요. 나중에 셀 값을 고쳐도 합계가 자동으로 바뀌어요.
         Row totalRow = sheet.createRow(r);
         Cell totalLabel = totalRow.createCell(0);
         totalLabel.setCellValue("합계");
         totalLabel.setCellStyle(totalStyle);
 
-        if (monthly.isEmpty()) {
-            for (int col = 1; col <= 3; col++) {
-                Cell c = totalRow.createCell(col);
+        for (int col = 1; col <= 6; col++) {
+            char colLetter = (char) ('A' + col);
+            Cell c = totalRow.createCell(col);
+            if (monthly.isEmpty()) {
                 c.setCellValue(0);
-                c.setCellStyle(totalStyle);
-            }
-        } else {
-            for (int col = 1; col <= 3; col++) {
-                char colLetter = (char) ('A' + col);
-                Cell c = totalRow.createCell(col);
+            } else {
                 c.setCellFormula("SUM(" + colLetter + (startRow + 1) + ":" + colLetter + (endRow + 1) + ")");
-                c.setCellStyle(totalStyle);
             }
+            c.setCellStyle(totalStyle);
         }
 
         sheet.setColumnWidth(0, 12 * 256);
-        for (int i = 1; i <= 3; i++) sheet.setColumnWidth(i, 14 * 256);
+        for (int i = 1; i <= 6; i++) sheet.setColumnWidth(i, 13 * 256);
         sheet.createFreezePane(0, 3);
     }
 
@@ -116,9 +113,9 @@ public class ExportCsvServlet extends HttpServlet {
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("일별 상세 매출 내역");
         titleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
 
-        String[] headers = {"날짜", "총매출", "카드매출", "현금매출"};
+        String[] headers = {"날짜", "총매출", "카드매출", "현금매출", "주류매출", "수수료", "기타지출"};
         Row headerRow = sheet.createRow(2);
         for (int i = 0; i < headers.length; i++) {
             Cell c = headerRow.createCell(i);
@@ -131,9 +128,13 @@ public class ExportCsvServlet extends HttpServlet {
         for (SalesRecord rec : detail) {
             Row dataRow = sheet.createRow(r);
             dataRow.createCell(0).setCellValue(rec.getSalesDate().toString());
-            Cell total = dataRow.createCell(1); total.setCellValue(rec.getTotalAmount()); total.setCellStyle(moneyStyle);
-            Cell card = dataRow.createCell(2); card.setCellValue(rec.getCardAmount()); card.setCellStyle(moneyStyle);
-            Cell cash = dataRow.createCell(3); cash.setCellValue(rec.getCashAmount()); cash.setCellStyle(moneyStyle);
+            int[] values = { rec.getTotalAmount(), rec.getCardAmount(), rec.getCashAmount(),
+                              rec.getLiquorAmount(), rec.getFeeAmount(), rec.getOtherExpense() };
+            for (int col = 1; col <= 6; col++) {
+                Cell c = dataRow.createCell(col);
+                c.setCellValue(values[col - 1]);
+                c.setCellStyle(moneyStyle);
+            }
             r++;
         }
         int endRow = r - 1;
@@ -143,23 +144,19 @@ public class ExportCsvServlet extends HttpServlet {
         totalLabel.setCellValue("합계");
         totalLabel.setCellStyle(totalStyle);
 
-        if (detail.isEmpty()) {
-            for (int col = 1; col <= 3; col++) {
-                Cell c = totalRow.createCell(col);
+        for (int col = 1; col <= 6; col++) {
+            char colLetter = (char) ('A' + col);
+            Cell c = totalRow.createCell(col);
+            if (detail.isEmpty()) {
                 c.setCellValue(0);
-                c.setCellStyle(totalStyle);
-            }
-        } else {
-            for (int col = 1; col <= 3; col++) {
-                char colLetter = (char) ('A' + col);
-                Cell c = totalRow.createCell(col);
+            } else {
                 c.setCellFormula("SUM(" + colLetter + (startRow + 1) + ":" + colLetter + (endRow + 1) + ")");
-                c.setCellStyle(totalStyle);
             }
+            c.setCellStyle(totalStyle);
         }
 
         sheet.setColumnWidth(0, 12 * 256);
-        for (int i = 1; i <= 3; i++) sheet.setColumnWidth(i, 14 * 256);
+        for (int i = 1; i <= 6; i++) sheet.setColumnWidth(i, 13 * 256);
         sheet.createFreezePane(0, 3);
     }
 

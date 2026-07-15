@@ -121,23 +121,16 @@ table.moa-table th { background: #F9FAFB; font-size: 11.5px; color: var(--text-m
 .mypage-nav-link:hover { background:rgba(255,255,255,0.08); color:#fff; }
 .mypage-nav-link.active { background:rgba(255,255,255,0.12); color:#fff; }
 
-/* 실시간 검색어 스타일 광고 랭킹 */
-.live-rank-box { background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px 18px; box-shadow:0 8px 24px rgba(15,13,26,0.05); }
-.live-rank-header { font-size:12px; font-weight:700; color:var(--navy); display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+/* 전체 폭 흘러가는 광고 티커 (뉴스 속보 자막 스타일) */
 .live-dot { width:7px; height:7px; border-radius:50%; background:#DC2626; display:inline-block; animation: pulseDot 1.4s ease-in-out infinite; }
 @keyframes pulseDot { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-.live-rank-list { list-style:none; padding:0; margin:0; }
-.live-rank-list li { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #F3F4F6; font-size:12.5px; }
-.live-rank-list li:last-child { border-bottom:none; }
-.live-rank-num { width:18px; height:18px; border-radius:5px; background:var(--primary); color:#fff; font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.live-rank-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.4;
-}
-.live-rank-list li { align-items: flex-start; }
-.live-rank-num { margin-top: 1px; }
+
+.ad-marquee-wrap { background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 8px 24px rgba(15,13,26,0.05); display:flex; align-items:center; overflow:hidden; }
+.ad-marquee-label { flex-shrink:0; font-size:12px; font-weight:700; color:var(--navy); display:flex; align-items:center; gap:6px; padding:14px 18px; border-right:1px solid var(--border); white-space:nowrap; background:#FAFAFC; }
+.ad-marquee-track { flex:1; overflow:hidden; position:relative; }
+.ad-marquee-content { display:flex; width:max-content; animation: marqueeScroll 22s linear infinite; }
+.ad-marquee-wrap:hover .ad-marquee-content { animation-play-state: paused; }
+@keyframes marqueeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ad-marquee-item { flex-shrink:0; font-size:13px; padding:14px 28px; white-space:nowrap; border-right:1px dashed var(--border); }
+.ad-marquee-item i { color:var(--primary); margin-right:4px; }
 

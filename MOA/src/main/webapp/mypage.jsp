@@ -45,6 +45,12 @@
                         <div class="mb-2"><label class="form-label">총 매출</label><input type="number" name="total" class="form-control" required></div>
                         <div class="mb-2"><label class="form-label">카드 매출</label><input type="number" name="card" class="form-control" required></div>
                         <div class="mb-2"><label class="form-label">현금 매출</label><input type="number" name="cash" class="form-control" required></div>
+                        <a class="d-block mb-2" data-bs-toggle="collapse" href="#detailFields" style="font-size:12px;"><i class="bi bi-chevron-down"></i> 주류매출·수수료·기타지출 추가 입력 (선택)</a>
+                        <div class="collapse" id="detailFields">
+                            <div class="mb-2"><label class="form-label" style="font-size:12px;">주류매출</label><input type="number" name="liquor" class="form-control form-control-sm" placeholder="0"></div>
+                            <div class="mb-2"><label class="form-label" style="font-size:12px;">수수료</label><input type="number" name="fee" class="form-control form-control-sm" placeholder="0"></div>
+                            <div class="mb-2"><label class="form-label" style="font-size:12px;">기타지출</label><input type="number" name="other" class="form-control form-control-sm" placeholder="0"></div>
+                        </div>
                         <button type="submit" class="btn-moa w-100 justify-content-center">저장</button>
                     </form>
                 </div>
@@ -96,6 +102,7 @@
 </div>
 
 <% if (!salesList.isEmpty()) { %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
     var labels = [<% for (int i = Math.min(9, salesList.size()-1); i>=0; i--) { %>'<%= salesList.get(i).getSalesDate() %>'<%= i>0?",":"" %><% } %>];

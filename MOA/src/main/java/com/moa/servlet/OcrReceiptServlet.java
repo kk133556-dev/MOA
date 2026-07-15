@@ -94,6 +94,11 @@ public class OcrReceiptServlet extends HttpServlet {
             result.put("cardEstimate", total);
             result.put("cashEstimate", 0);
             result.put("imagePath", savedImagePath); // ai_receipt.jsp가 이 값을 그대로 SalesServlet에 넘겨서 매출기록에 같이 저장해요.
+            if (items.isEmpty()) {
+                // 품목을 하나도 못 찾았으면, Vision이 실제로 뭘 읽었는지 화면에서 바로 볼 수 있게
+                // 원문 텍스트 앞부분을 같이 보내줘요. (원인 파악용 - 파싱 정확도 잡히면 나중에 빼도 돼요)
+                result.put("debugRawText", ocrText.length() > 800 ? ocrText.substring(0, 800) + "..." : ocrText);
+            }
             resp.getWriter().print(result.toString());
 
         } catch (Exception e) {

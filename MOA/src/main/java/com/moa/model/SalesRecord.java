@@ -10,6 +10,9 @@ public class SalesRecord {
     private int cardAmount;
     private int cashAmount;
     private String receiptImage;
+    private int liquorAmount;
+    private int feeAmount;
+    private int otherExpense;
 
     public int getSalesId() { return salesId; }
     public void setSalesId(int salesId) { this.salesId = salesId; }
@@ -31,4 +34,11 @@ public class SalesRecord {
 
     public String getReceiptImage() { return receiptImage; }
     public void setReceiptImage(String receiptImage) { this.receiptImage = receiptImage; }
+
+    public int getLiquorAmount() { return liquorAmount; }
+    public void setLiquorAmount(int liquorAmount) { this.liquorAmount = liquorAmount; }
+    public int getFeeAmount() { return feeAmount; }
+    public void setFeeAmount(int feeAmount) { this.feeAmount = feeAmount; }
+    public int getOtherExpense() { return otherExpense; }
+    public void setOtherExpense(int otherExpense) { this.otherExpense = otherExpense; }
 }

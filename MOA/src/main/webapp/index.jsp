@@ -55,7 +55,7 @@
 <section class="hero-pro">
     <div class="container">
         <div class="row align-items-center g-5">
-            <div class="col-lg-5">
+            <div class="col-lg-6">
                 <span class="badge-pill"><i class="bi bi-shop"></i> 사업자등록증 등록 소상공인 전용</span>
                 <h1>영수증 한 장이면<br><span class="grad-text">매출이 저절로</span> 정리돼요</h1>
                 <p class="lead">영수증 사진 한 장이면 AI가 매출을 자동으로 분석해드려요.<br class="d-none d-md-block">카드·현금 매출부터 순수익, 일별·월별 통계까지 한눈에.</p>
@@ -65,30 +65,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-3 d-none d-lg-flex flex-column">
-                <% if (!ads.isEmpty()) { %>
-                <div class="live-rank-box">
-                    <div class="live-rank-header">
-                        <span class="live-dot"></span> 실시간 매장 소식
-                    </div>
-                    <ol class="live-rank-list" id="liveRankList">
-                        <% for (int i = 0; i < ads.size(); i++) { Ad ad = ads.get(i); %>
-                        <li>
-                            <span class="live-rank-num"><%= i + 1 %></span>
-                            <span class="live-rank-text"><b><%= ad.getStoreName() %></b> · <%= ad.getBannerText() %></span>
-                        </li>
-                        <% } %>
-                    </ol>
-                </div>
-                <% } else { %>
-                <div class="live-rank-box text-center">
-                    <div class="live-rank-header justify-content-center"><i class="bi bi-megaphone"></i> 광고 신청 안내</div>
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:0;">지금 광고를 신청하면 이 자리에 우리 매장이 실시간으로 노출돼요.</p>
-                </div>
-                <% } %>
-            </div>
-
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <% if (!loggedIn) { %>
                     <div class="hero-login-panel reveal">
                         <h6><i class="bi bi-box-arrow-in-right"></i> 로그인</h6>
@@ -122,6 +99,20 @@
                 <% } %>
             </div>
         </div>
+
+        <% if (!ads.isEmpty()) { %>
+        <div class="ad-marquee-wrap mt-5 reveal">
+            <div class="ad-marquee-label"><span class="live-dot"></span> 실시간 매장 소식</div>
+            <div class="ad-marquee-track">
+                <div class="ad-marquee-content" id="adMarqueeContent">
+                    <% for (int loop = 0; loop < 2; loop++) { // 두 번 반복해서 이어붙여야 끊김 없이 계속 흘러가요
+                        for (Ad ad : ads) { %>
+                        <span class="ad-marquee-item"><i class="bi bi-shop"></i> <b><%= ad.getStoreName() %></b> · <%= ad.getBannerText() %></span>
+                    <% } } %>
+                </div>
+            </div>
+        </div>
+        <% } %>
     </div>
 </section>
 
@@ -232,24 +223,6 @@
     var els = document.querySelectorAll('.reveal');
     var obs = new IntersectionObserver(function (entries) { entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }); }, { threshold: 0.1 });
     els.forEach(function (el) { obs.observe(el); });
-
-    // 실시간 검색어처럼, 맨 위 항목이 주기적으로 맨 아래로 순환하며 다음 매장이 1위로 올라와요.
-    (function () {
-        var list = document.getElementById('liveRankList');
-        if (!list || list.children.length <= 1) return;
-        setInterval(function () {
-            var items = Array.from(list.children);
-            items.forEach(function (li, i) { li.querySelector('.live-rank-num').textContent = (i % items.length) + 1; });
-            var first = list.children[0];
-            first.style.transition = 'opacity .3s ease';
-            first.style.opacity = '0';
-            setTimeout(function () {
-                list.appendChild(first);
-                Array.from(list.children).forEach(function (li, i) { li.querySelector('.live-rank-num').textContent = i + 1; });
-                first.style.opacity = '1';
-            }, 300);
-        }, 2800);
-    })();
 </script>
 <jsp:include page="chat_widget.jsp" />
 </body>
