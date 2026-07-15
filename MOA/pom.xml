@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<modelVersion>4.0.0</modelVersion>
+<groupId>com.moa</groupId>
+<artifactId>MOA</artifactId>
+<version>0.0.1-SNAPSHOT</version>
+<packaging>war</packaging>
+<properties>
+<maven.compiler.release>21</maven.compiler.release>
+<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+<dependencies>
+<!--  서블릿/JSP API - Tomcat이 실행 시 제공해주니까 "provided"로: 빌드에는 필요하지만
+         war 파일 안에는 안 들어가요 (넣으면 오히려 Tomcat 내장 버전이랑 충돌나요)  -->
+<dependency>
+<groupId>jakarta.servlet</groupId>
+<artifactId>jakarta.servlet-api</artifactId>
+<version>6.0.0</version>
+<scope>provided</scope>
+</dependency>
+<!--  JSP에서 쓰는 JSTL 관련 태그가 있다면 대비용 (안 쓰면 없어도 무방)  -->
+<dependency>
+<groupId>jakarta.servlet.jsp.jstl</groupId>
+<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+<version>3.0.0</version>
+</dependency>
+<dependency>
+<groupId>org.glassfish.web</groupId>
+<artifactId>jakarta.servlet.jsp.jstl</artifactId>
+<version>3.0.1</version>
+</dependency>
+<!--  MySQL 커넥터 - DBUtil.java가 쓰는 그 드라이버  -->
+<dependency>
+<groupId>com.mysql</groupId>
+<artifactId>mysql-connector-j</artifactId>
+<version>8.4.0</version>
+</dependency>
+<!--  OcrReceiptServlet이 쓰는 JSON 처리 라이브러리  -->
+<dependency>
+<groupId>org.json</groupId>
+<artifactId>json</artifactId>
+<version>20240303</version>
+</dependency>
+</dependencies>
+<build>
+<finalName>MOA</finalName>
+<plugins>
+<plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-compiler-plugin</artifactId>
+<version>3.13.0</version>
+<configuration>
+<release>21</release>
+</configuration>
+</plugin>
+<plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-war-plugin</artifactId>
+<version>3.4.0</version>
+<configuration>
+<failOnMissingWebXml>false</failOnMissingWebXml>
+</configuration>
+</plugin>
+</plugins>
+</build>
+</project>
