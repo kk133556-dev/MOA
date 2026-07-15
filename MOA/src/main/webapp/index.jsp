@@ -165,8 +165,8 @@
         <div class="col-md-3 col-6 reveal">
             <a href="ai_receipt.jsp" class="feature-card">
                 <div class="feature-icon"><i class="bi bi-camera-fill"></i></div>
-                <h6>영수증 AI 스캔</h6>
-                <p class="text-muted" style="font-size:12.5px;">영수증 사진 한 장으로 매출을 자동 등록해요.</p>
+                <h6>매출 자동 집계</h6>
+                <p class="text-muted" style="font-size:12.5px;">영수증 사진 한 장으로 매출을 자동으로 집계해요.</p>
                 <span class="arrow">바로가기 <i class="bi bi-arrow-right"></i></span>
             </a>
         </div>
