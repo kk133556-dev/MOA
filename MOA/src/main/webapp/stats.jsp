@@ -43,11 +43,16 @@
             <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-value">₩ <%= String.format("%,d", lastMonthTotal) %></div><div class="kpi-label">지난 달 매출 (<%= lastMonth %>)</div></div></div>
             <div class="col-md-3 col-6">
                 <div class="kpi-card">
-                    <div class="kpi-value" style="color:<%= changeRate >= 0 ? "#16A34A" : "#DC2626" %>;">
-                        <i class="bi bi-<%= changeRate >= 0 ? "arrow-up-right" : "arrow-down-right" %>"></i>
+                    <div class="kpi-value" style="color:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                        <i class="bi bi-<%= changeRate > 0 ? "arrow-up-right" : (changeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
                         <%= String.format("%.1f", Math.abs(changeRate)) %>%
                     </div>
-                    <div class="kpi-label">전월 대비 증감</div>
+                    <div class="kpi-label">
+                        전월 대비
+                        <span class="badge" style="font-size:9.5px; background:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                            <%= changeRate > 0 ? "▲ 상승" : (changeRate < 0 ? "▼ 하락" : "- 동일") %>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
