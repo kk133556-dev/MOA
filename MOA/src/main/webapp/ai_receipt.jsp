@@ -49,17 +49,18 @@
 
             <div class="col-lg-7">
                 <div class="moa-card" id="resultCard" style="display:none;">
-                    <p style="font-size:12px; color:var(--text-muted);"><i class="bi bi-info-circle"></i> 엑셀처럼 셀을 눌러서 값을 바로 수정할 수 있어요. 카드/현금은 서로 자동으로 맞춰져요.</p>
+                    <p style="font-size:12px; color:var(--text-muted);"><i class="bi bi-info-circle"></i> 엑셀처럼 셀을 눌러서 값을 바로 수정할 수 있어요. 잘못 잡힌 줄은 지우고, 빠진 품목은 추가하세요. 카드/현금은 서로 자동으로 맞춰져요.</p>
 
-                    <table class="excel-table mb-3">
-                        <thead><tr><th>항목</th><th>수량</th><th>단가</th><th>금액</th></tr></thead>
+                    <table class="excel-table mb-2">
+                        <thead><tr><th>항목</th><th style="width:70px;">수량</th><th style="width:90px;">단가</th><th style="width:100px;">금액</th><th style="width:36px;"></th></tr></thead>
                         <tbody id="itemBody"></tbody>
                         <tfoot>
-                            <tr><td colspan="3">합계 (총 매출)</td><td id="totalCell">0</td></tr>
-                            <tr><td colspan="3">카드 매출</td><td contenteditable id="cardCell">0</td></tr>
-                            <tr><td colspan="3">현금 매출</td><td contenteditable id="cashCell">0</td></tr>
+                            <tr><td colspan="3">합계 (총 매출)</td><td id="totalCell">0</td><td></td></tr>
+                            <tr><td colspan="3">카드 매출</td><td contenteditable id="cardCell">0</td><td></td></tr>
+                            <tr><td colspan="3">현금 매출</td><td contenteditable id="cashCell">0</td><td></td></tr>
                         </tfoot>
                     </table>
+                    <button type="button" id="addItemBtn" class="btn-moa-outline btn-moa-sm mb-3"><i class="bi bi-plus-lg"></i> 품목 추가</button>
 
                     <form action="SalesServlet" method="post" id="saveForm">
                         <input type="hidden" name="total" id="fTotal">
@@ -127,18 +128,36 @@
             });
     });
 
+    function makeRow(name, qty, price) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td contenteditable>' + name + '</td>' +
+            '<td contenteditable class="qty">' + qty + '</td>' +
+            '<td contenteditable class="price">' + price + '</td>' +
+            '<td class="amount">' + (qty * price) + '</td>' +
+            '<td class="text-center"><i class="bi bi-trash rowDelBtn" style="cursor:pointer; color:#DC2626;"></i></td>';
+        return tr;
+    }
+
     function renderItems(items) {
         itemBody.innerHTML = '';
         items.forEach(function (item) {
-            var tr = document.createElement('tr');
-            tr.innerHTML =
-                '<td contenteditable>' + item.name + '</td>' +
-                '<td contenteditable class="qty">' + item.qty + '</td>' +
-                '<td contenteditable class="price">' + item.price + '</td>' +
-                '<td class="amount">' + (item.qty * item.price) + '</td>';
-            itemBody.appendChild(tr);
+            itemBody.appendChild(makeRow(item.name, item.qty, item.price));
         });
     }
+
+    document.getElementById('addItemBtn').addEventListener('click', function () {
+        itemBody.appendChild(makeRow('새 품목', 1, 0));
+        recalc();
+    });
+
+    // 삭제 버튼은 나중에 추가된 행에도 다 먹히도록, itemBody 전체에 클릭을 위임해서 처리해요.
+    itemBody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('rowDelBtn')) {
+            e.target.closest('tr').remove();
+            recalc();
+        }
+    });
 
     var lastEditedPayCell = null;
 
