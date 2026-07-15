@@ -26,6 +26,11 @@ public class EmployeeServlet extends HttpServlet {
             if ("delete".equals(action)) {
                 int employeeId = Integer.parseInt(req.getParameter("employeeId"));
                 dao.deleteOwnedByStore(employeeId, storeId);
+            } else if ("update".equals(action)) {
+                int employeeId = Integer.parseInt(req.getParameter("employeeId"));
+                dao.updateOwnedByStore(employeeId, storeId, req.getParameter("name"), req.getParameter("role"),
+                        req.getParameter("phone"), req.getParameter("address"), req.getParameter("memo"),
+                        req.getParameter("guardianName"), req.getParameter("guardianPhone"));
             } else {
                 dao.insert(storeId, req.getParameter("name"), req.getParameter("role"),
                         req.getParameter("phone"), req.getParameter("address"), req.getParameter("memo"),

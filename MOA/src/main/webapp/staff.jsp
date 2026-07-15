@@ -91,11 +91,14 @@
                                 <% if (e.getPhone() != null && !e.getPhone().isEmpty()) { %><div style="font-size:11px; color:var(--text-muted);"><%= e.getPhone() %></div><% } %>
                                 <% if (e.getMemo() != null && !e.getMemo().isEmpty()) { %><div style="font-size:11px; color:var(--text-muted);"><i class="bi bi-sticky"></i> <%= e.getMemo() %></div><% } %>
                             </div>
-                            <form action="EmployeeServlet" method="post" onsubmit="event.stopPropagation(); return confirm('<%= e.getName() %> 직원을 삭제할까요? 근무 일정도 같이 지워져요.');">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="employeeId" value="<%= e.getEmployeeId() %>">
-                                <button type="submit" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;" onclick="event.stopPropagation();"><i class="bi bi-trash"></i></button>
-                            </form>
+                            <div class="d-flex align-items-center gap-1">
+                                <button type="button" class="btn-moa-outline btn-moa-sm" title="정보 수정"><i class="bi bi-pencil"></i></button>
+                                <form action="EmployeeServlet" method="post" onsubmit="event.stopPropagation(); return confirm('<%= e.getName() %> 직원을 삭제할까요? 근무 일정도 같이 지워져요.');">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="employeeId" value="<%= e.getEmployeeId() %>">
+                                    <button type="submit" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;" onclick="event.stopPropagation();"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
                         </div>
                     <% } } %>
                 </div>
@@ -149,22 +152,39 @@
     </main>
 </div>
 
-<!-- 직원 상세 정보 모달 -->
+<!-- 직원 정보 수정 모달 -->
 <div class="modal fade" id="empDetailModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h6 class="modal-title" id="empDetailName"><i class="bi bi-person-badge"></i></h6>
+                <h6 class="modal-title"><i class="bi bi-person-badge"></i> 직원 정보 수정</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="font-size:13px;">
-                <div class="mb-2"><span class="text-muted">직책</span><div id="empDetailRole"></div></div>
-                <div class="mb-2"><span class="text-muted">연락처</span><div id="empDetailPhone">-</div></div>
-                <div class="mb-2"><span class="text-muted">집주소</span><div id="empDetailAddress">-</div></div>
-                <div class="mb-2"><span class="text-muted">보호자 성함</span><div id="empDetailGuardianName">-</div></div>
-                <div class="mb-2"><span class="text-muted">보호자 전화번호</span><div id="empDetailGuardianPhone">-</div></div>
-                <div class="mb-0"><span class="text-muted">메모</span><div id="empDetailMemo">-</div></div>
-            </div>
+            <form action="EmployeeServlet" method="post">
+                <div class="modal-body" style="font-size:13px;">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="employeeId" id="empEditId">
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">이름</label><input type="text" name="name" id="empEditName" class="form-control form-control-sm" required></div>
+                    <div class="mb-2">
+                        <label class="form-label" style="font-size:12px;">직책</label>
+                        <select name="role" id="empEditRole" class="form-control form-control-sm">
+                            <option value="알바">알바</option>
+                            <option value="직원">직원</option>
+                            <option value="점장">점장</option>
+                            <option value="매니저">매니저</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">연락처</label><input type="text" name="phone" id="empEditPhone" class="form-control form-control-sm" placeholder="010-0000-0000"></div>
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">집주소</label><input type="text" name="address" id="empEditAddress" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">보호자 성함</label><input type="text" name="guardianName" id="empEditGuardianName" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">보호자 전화번호</label><input type="text" name="guardianPhone" id="empEditGuardianPhone" class="form-control form-control-sm" placeholder="010-0000-0000"></div>
+                    <div class="mb-0"><label class="form-label" style="font-size:12px;">메모</label><input type="text" name="memo" id="empEditMemo" class="form-control form-control-sm"></div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn-moa-outline btn-moa-sm" data-bs-dismiss="modal">취소</button>
+                    <button type="submit" class="btn-moa btn-moa-sm">저장</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -218,13 +238,14 @@
         row.addEventListener('click', function () {
             var emp = employeeData[row.dataset.empId];
             if (!emp) return;
-            document.getElementById('empDetailName').innerHTML = '<i class="bi bi-person-badge"></i> ' + emp.name;
-            document.getElementById('empDetailRole').textContent = emp.role;
-            document.getElementById('empDetailPhone').textContent = emp.phone || '-';
-            document.getElementById('empDetailAddress').textContent = emp.address || '-';
-            document.getElementById('empDetailGuardianName').textContent = emp.guardianName || '-';
-            document.getElementById('empDetailGuardianPhone').textContent = emp.guardianPhone || '-';
-            document.getElementById('empDetailMemo').textContent = emp.memo || '-';
+            document.getElementById('empEditId').value = row.dataset.empId;
+            document.getElementById('empEditName').value = emp.name || '';
+            document.getElementById('empEditRole').value = emp.role || '알바';
+            document.getElementById('empEditPhone').value = emp.phone || '';
+            document.getElementById('empEditAddress').value = emp.address || '';
+            document.getElementById('empEditGuardianName').value = emp.guardianName || '';
+            document.getElementById('empEditGuardianPhone').value = emp.guardianPhone || '';
+            document.getElementById('empEditMemo').value = emp.memo || '';
             empDetailModal.show();
         });
     });

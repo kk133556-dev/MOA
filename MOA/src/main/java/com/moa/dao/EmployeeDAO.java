@@ -40,6 +40,25 @@ public class EmployeeDAO {
         return -1;
     }
 
+    // 본인 매장 직원 정보 수정 (오타 수정 등)
+    public void updateOwnedByStore(int employeeId, int storeId, String name, String role, String phone,
+                                    String address, String memo, String guardianName, String guardianPhone) throws SQLException {
+        String sql = "UPDATE employees SET name = ?, role = ?, phone = ?, address = ?, memo = ?, guardian_name = ?, guardian_phone = ? " +
+                "WHERE employee_id = ? AND store_id = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setString(2, role);
+            ps.setString(3, phone);
+            ps.setString(4, address);
+            ps.setString(5, memo);
+            ps.setString(6, guardianName);
+            ps.setString(7, guardianPhone);
+            ps.setInt(8, employeeId);
+            ps.setInt(9, storeId);
+            ps.executeUpdate();
+        }
+    }
+
     // 본인 매장 직원만 지울 수 있게 store_id도 같이 확인해요.
     public void deleteOwnedByStore(int employeeId, int storeId) throws SQLException {
         String sql = "DELETE FROM employees WHERE employee_id = ? AND store_id = ?";
