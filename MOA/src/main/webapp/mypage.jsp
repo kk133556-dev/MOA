@@ -72,7 +72,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h6 class="mb-0"><i class="bi bi-table"></i> 매출 기록</h6>
                 <div class="d-flex gap-2">
-                    <a href="ExportCsvServlet" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-spreadsheet"></i> 엑셀(CSV)</a>
+                    <a href="ExportCsvServlet" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-spreadsheet"></i> 엑셀(XLSX)</a>
                     <a href="report_print.jsp" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
                 </div>
             </div>

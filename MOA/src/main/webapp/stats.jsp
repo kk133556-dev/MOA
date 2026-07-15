@@ -32,7 +32,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0"><i class="bi bi-bar-chart"></i> 매출 통계</h4>
             <div class="d-flex gap-2">
-                <a href="ExportCsvServlet" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-spreadsheet"></i> 엑셀(CSV)</a>
+                <a href="ExportCsvServlet" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-spreadsheet"></i> 엑셀(XLSX)</a>
                 <a href="report_print.jsp" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
             </div>
         </div>

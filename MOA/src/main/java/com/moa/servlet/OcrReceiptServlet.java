@@ -32,7 +32,13 @@ import org.json.JSONObject;
 @MultipartConfig(maxFileSize = 10 * 1024 * 1024) // 10MB 제한
 public class OcrReceiptServlet extends HttpServlet {
 
-    private static final String GOOGLE_VISION_API_KEY = "여기에_발급받은_API_키_입력";
+    // 로컬 Eclipse에서 빠르게 테스트할 땐 아래 문자열에 직접 키를 넣어도 되지만,
+    // Railway 등에 배포할 땐 소스코드에 키가 그대로 노출되면 안 되니까 환경변수(GOOGLE_VISION_API_KEY)를
+    // 우선적으로 사용해요. Railway Variables에 GOOGLE_VISION_API_KEY를 등록해두면 자동으로 그 값을 써요.
+    private static final String GOOGLE_VISION_API_KEY =
+        System.getenv("GOOGLE_VISION_API_KEY") != null
+            ? System.getenv("GOOGLE_VISION_API_KEY")
+            : "여기에_로컬_테스트용_API_키_입력";
     private static final String VISION_URL = "https://vision.googleapis.com/v1/images:annotate?key=" + GOOGLE_VISION_API_KEY;
 
     // 금액/수량으로 볼 수 있는 "순수 숫자 토큰": 0~3자리 또는 1,000단위 콤마 형식만 인정해요.
