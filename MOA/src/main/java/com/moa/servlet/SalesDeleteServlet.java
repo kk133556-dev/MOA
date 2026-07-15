@@ -20,12 +20,23 @@ public class SalesDeleteServlet extends HttpServlet {
             return;
         }
         int storeId = (Integer) session.getAttribute("storeId");
-        String action = req.getParameter("action"); // "deleteSelected" 또는 "deleteAll"
+        String action = req.getParameter("action"); // "deleteSelected" / "deleteAll" / "deleteMonths"
+        String returnTo = req.getParameter("returnTo");
+        if (returnTo == null || (!returnTo.equals("stats.jsp") && !returnTo.equals("mypage.jsp"))) {
+            returnTo = "mypage.jsp";
+        }
 
         try {
             SalesDAO dao = new SalesDAO();
             if ("deleteAll".equals(action)) {
                 dao.deleteAllForStore(storeId);
+            } else if ("deleteMonths".equals(action)) {
+                String[] ymParams = req.getParameterValues("ym");
+                List<String> months = new ArrayList<>();
+                if (ymParams != null) {
+                    for (String s : ymParams) months.add(s);
+                }
+                dao.deleteByYearMonthsForStore(months, storeId);
             } else {
                 String[] idParams = req.getParameterValues("salesId");
                 List<Integer> ids = new ArrayList<>();
@@ -36,7 +47,7 @@ public class SalesDeleteServlet extends HttpServlet {
                 }
                 dao.deleteByIdsForStore(ids, storeId);
             }
-            resp.sendRedirect("mypage.jsp?salesDeleted=1");
+            resp.sendRedirect(returnTo + "?salesDeleted=1");
         } catch (SQLException e) {
             throw new ServletException(e);
         }

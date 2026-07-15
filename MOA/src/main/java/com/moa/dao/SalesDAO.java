@@ -186,6 +186,43 @@ public class SalesDAO {
         }
     }
 
+    // 소상공인이 마이페이지에서 본인 매출 기록을 직접 지울 때 써요. store_id까지 조건에 넣어서
+    // 다른 매장 기록은 절대 못 지우게 막아요.
+    public void deleteByIdsForStore(List<Integer> salesIds, int storeId) throws SQLException {
+        if (salesIds == null || salesIds.isEmpty()) return;
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < salesIds.size(); i++) placeholders.append(i == 0 ? "?" : ",?");
+        String sql = "DELETE FROM sales_records WHERE store_id = ? AND sales_id IN (" + placeholders + ")";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            for (int i = 0; i < salesIds.size(); i++) ps.setInt(i + 2, salesIds.get(i));
+            ps.executeUpdate();
+        }
+    }
+
+    // 해당 매장의 매출 기록을 전부 삭제해요 (전체 삭제 버튼용).
+    public void deleteAllForStore(int storeId) throws SQLException {
+        String sql = "DELETE FROM sales_records WHERE store_id = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            ps.executeUpdate();
+        }
+    }
+
+    // 매출 통계 페이지의 "월별 상세 내역"에서 특정 월(들)을 통째로 지울 때 써요.
+    // 하나의 월에 딸린 일별 기록들을 전부 지워요.
+    public void deleteByYearMonthsForStore(List<String> yearMonths, int storeId) throws SQLException {
+        if (yearMonths == null || yearMonths.isEmpty()) return;
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < yearMonths.size(); i++) placeholders.append(i == 0 ? "?" : ",?");
+        String sql = "DELETE FROM sales_records WHERE store_id = ? AND DATE_FORMAT(sales_date, '%Y-%m') IN (" + placeholders + ")";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            for (int i = 0; i < yearMonths.size(); i++) ps.setString(i + 2, yearMonths.get(i));
+            ps.executeUpdate();
+        }
+    }
+
     // 관리자 파일 관리 화면용 - 영수증 이미지가 첨부된 전체 매출기록을 매장명과 함께 최신순으로.
     public List<Object[]> listAllWithReceiptImages() throws SQLException {
         List<Object[]> list = new ArrayList<>();

@@ -82,18 +82,34 @@
                     <a href="report_print.jsp" class="btn-moa-outline btn-moa-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
                 </div>
             </div>
-            <table class="table moa-table mt-2">
-                <thead><tr><th>날짜</th><th>총 매출</th><th>카드</th><th>현금</th><th>영수증</th></tr></thead>
-                <tbody>
-                <% if (salesList.isEmpty()) { %>
-                    <tr><td colspan="5" class="text-center text-muted">아직 등록된 매출이 없어요</td></tr>
-                <% } else { for (int i = 0; i < Math.min(10, salesList.size()); i++) { SalesRecord r = salesList.get(i); %>
-                    <tr><td><%= r.getSalesDate() %></td><td><%= r.getTotalAmount() %>원</td><td><%= r.getCardAmount() %>원</td><td><%= r.getCashAmount() %>원</td>
-                        <td><% if (r.getReceiptImage() != null) { %><a href="<%= r.getReceiptImage() %>" target="_blank"><i class="bi bi-image"></i> 보기</a><% } else { %><span class="text-muted">-</span><% } %></td>
-                    </tr>
-                <% } } %>
-                </tbody>
-            </table>
+            <% if ("1".equals(request.getParameter("salesDeleted"))) { %>
+                <div class="alert alert-success py-2 mt-2" style="font-size:12.5px;"><i class="bi bi-check-circle"></i> 삭제됐어요.</div>
+            <% } %>
+            <form action="SalesDeleteServlet" method="post" id="salesDeleteForm">
+                <input type="hidden" name="action" id="salesDeleteAction" value="deleteSelected">
+                <input type="hidden" name="returnTo" value="mypage.jsp">
+                <div class="d-flex justify-content-between align-items-center mt-2 mb-1">
+                    <label style="font-size:12px; color:var(--text-muted);"><input type="checkbox" id="checkAll" style="margin-right:5px;">전체 선택</label>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnDeleteSelected" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;" disabled>선택 삭제</button>
+                        <button type="button" id="btnDeleteAll" class="btn-moa-outline btn-moa-sm" style="color:#991B1B; border-color:#991B1B;">전체 삭제</button>
+                    </div>
+                </div>
+                <table class="table moa-table mt-1">
+                    <thead><tr><th style="width:32px;"></th><th>날짜</th><th>총 매출</th><th>카드</th><th>현금</th><th>영수증</th></tr></thead>
+                    <tbody>
+                    <% if (salesList.isEmpty()) { %>
+                        <tr><td colspan="6" class="text-center text-muted">아직 등록된 매출이 없어요</td></tr>
+                    <% } else { for (int i = 0; i < Math.min(10, salesList.size()); i++) { SalesRecord r = salesList.get(i); %>
+                        <tr>
+                            <td><input type="checkbox" class="rowCheck" name="salesId" value="<%= r.getSalesId() %>"></td>
+                            <td><%= r.getSalesDate() %></td><td><%= r.getTotalAmount() %>원</td><td><%= r.getCardAmount() %>원</td><td><%= r.getCashAmount() %>원</td>
+                            <td><% if (r.getReceiptImage() != null) { %><a href="#" class="receiptViewBtn" data-src="<%= r.getReceiptImage() %>"><i class="bi bi-image"></i> 보기</a><% } else { %><span class="text-muted">-</span><% } %></td>
+                        </tr>
+                    <% } } %>
+                    </tbody>
+                </table>
+            </form>
             <% if (salesList.size() > 10) { %>
                 <div class="text-end"><a href="stats.jsp" style="font-size:12.5px;">전체 기록 보기 →</a></div>
             <% } %>
@@ -101,8 +117,26 @@
     </main>
 </div>
 
-<% if (!salesList.isEmpty()) { %>
+<!-- 영수증 이미지 팝업 -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" style="font-size:14px;"><i class="bi bi-image"></i> 영수증 원본</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="receiptModalImg" src="" alt="영수증" style="max-width:100%; border-radius:8px;">
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn-moa-outline btn-moa-sm" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<% if (!salesList.isEmpty()) { %>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
     var labels = [<% for (int i = Math.min(9, salesList.size()-1); i>=0; i--) { %>'<%= salesList.get(i).getSalesDate() %>'<%= i>0?",":"" %><% } %>];
@@ -118,6 +152,53 @@
     });
 </script>
 <% } %>
+<script>
+    var checkAll = document.getElementById('checkAll');
+    var rowChecks = document.querySelectorAll('.rowCheck');
+    var btnDeleteSelected = document.getElementById('btnDeleteSelected');
+    var btnDeleteAll = document.getElementById('btnDeleteAll');
+    var deleteForm = document.getElementById('salesDeleteForm');
+    var deleteAction = document.getElementById('salesDeleteAction');
+
+    function updateSelectedBtn() {
+        var anyChecked = Array.from(rowChecks).some(function (c) { return c.checked; });
+        btnDeleteSelected.disabled = !anyChecked;
+    }
+    if (checkAll) {
+        checkAll.addEventListener('change', function () {
+            rowChecks.forEach(function (c) { c.checked = checkAll.checked; });
+            updateSelectedBtn();
+        });
+    }
+    rowChecks.forEach(function (c) { c.addEventListener('change', updateSelectedBtn); });
+
+    if (btnDeleteSelected) {
+        btnDeleteSelected.addEventListener('click', function () {
+            var count = Array.from(rowChecks).filter(function (c) { return c.checked; }).length;
+            if (!confirm('선택한 ' + count + '건의 매출 기록을 삭제할까요?')) return;
+            deleteAction.value = 'deleteSelected';
+            deleteForm.submit();
+        });
+    }
+    if (btnDeleteAll) {
+        btnDeleteAll.addEventListener('click', function () {
+            if (!confirm('이 매장의 매출 기록을 전부 삭제할까요? 이 작업은 되돌릴 수 없어요.')) return;
+            deleteAction.value = 'deleteAll';
+            deleteForm.submit();
+        });
+    }
+
+    // 영수증 이미지 보기 팝업
+    var receiptModalEl = document.getElementById('receiptModal');
+    var receiptModal = receiptModalEl ? new bootstrap.Modal(receiptModalEl) : null;
+    document.querySelectorAll('.receiptViewBtn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('receiptModalImg').src = btn.dataset.src;
+            if (receiptModal) receiptModal.show();
+        });
+    });
+</script>
 <jsp:include page="chat_widget.jsp" />
 </body>
 </html>

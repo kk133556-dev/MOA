@@ -73,22 +73,37 @@
         </div>
 
         <div class="moa-card">
-            <h6 class="mb-3">월별 상세 내역</h6>
-            <table class="table moa-table">
-                <thead><tr><th>월</th><th>총 매출</th><th>카드</th><th>현금</th></tr></thead>
-                <tbody>
-                <% if (monthly.isEmpty()) { %>
-                    <tr><td colspan="4" class="text-center text-muted">데이터가 없어요</td></tr>
-                <% } else { for (int i = monthly.size()-1; i >= 0; i--) { Object[] row = monthly.get(i); %>
-                    <tr>
-                        <td><%= row[0] %></td>
-                        <td>₩ <%= String.format("%,d", (Integer) row[1]) %></td>
-                        <td>₩ <%= String.format("%,d", (Integer) row[2]) %></td>
-                        <td>₩ <%= String.format("%,d", (Integer) row[3]) %></td>
-                    </tr>
-                <% } } %>
-                </tbody>
-            </table>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">월별 상세 내역</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <label style="font-size:12px; color:var(--text-muted);"><input type="checkbox" id="checkAllMonths" style="margin-right:5px;">전체 선택</label>
+                    <button type="button" id="btnDeleteSelectedMonths" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;" disabled>선택 삭제</button>
+                    <button type="button" id="btnDeleteAllMonths" class="btn-moa-outline btn-moa-sm" style="color:#991B1B; border-color:#991B1B;">전체 삭제</button>
+                </div>
+            </div>
+            <% if ("1".equals(request.getParameter("salesDeleted"))) { %>
+                <div class="alert alert-success py-2" style="font-size:12.5px;"><i class="bi bi-check-circle"></i> 삭제됐어요.</div>
+            <% } %>
+            <form action="SalesDeleteServlet" method="post" id="monthDeleteForm">
+                <input type="hidden" name="action" id="monthDeleteAction" value="deleteMonths">
+                <input type="hidden" name="returnTo" value="stats.jsp">
+                <table class="table moa-table">
+                    <thead><tr><th style="width:32px;"></th><th>월</th><th>총 매출</th><th>카드</th><th>현금</th></tr></thead>
+                    <tbody>
+                    <% if (monthly.isEmpty()) { %>
+                        <tr><td colspan="5" class="text-center text-muted">데이터가 없어요</td></tr>
+                    <% } else { for (int i = monthly.size()-1; i >= 0; i--) { Object[] row = monthly.get(i); %>
+                        <tr>
+                            <td><input type="checkbox" class="monthCheck" name="ym" value="<%= row[0] %>"></td>
+                            <td><%= row[0] %></td>
+                            <td>₩ <%= String.format("%,d", (Integer) row[1]) %></td>
+                            <td>₩ <%= String.format("%,d", (Integer) row[2]) %></td>
+                            <td>₩ <%= String.format("%,d", (Integer) row[3]) %></td>
+                        </tr>
+                    <% } } %>
+                    </tbody>
+                </table>
+            </form>
         </div>
     </main>
 </div>
@@ -139,6 +154,40 @@
         activate(tabYearly);
         chart.data.labels = yearlyLabels; chart.data.datasets[0].data = yearlyValues; chart.update();
     });
+
+    var checkAllMonths = document.getElementById('checkAllMonths');
+    var monthChecks = document.querySelectorAll('.monthCheck');
+    var btnDeleteSelectedMonths = document.getElementById('btnDeleteSelectedMonths');
+    var btnDeleteAllMonths = document.getElementById('btnDeleteAllMonths');
+    var monthDeleteForm = document.getElementById('monthDeleteForm');
+
+    function updateMonthBtn() {
+        var anyChecked = Array.from(monthChecks).some(function (c) { return c.checked; });
+        btnDeleteSelectedMonths.disabled = !anyChecked;
+    }
+    if (checkAllMonths) {
+        checkAllMonths.addEventListener('change', function () {
+            monthChecks.forEach(function (c) { c.checked = checkAllMonths.checked; });
+            updateMonthBtn();
+        });
+    }
+    monthChecks.forEach(function (c) { c.addEventListener('change', updateMonthBtn); });
+
+    if (btnDeleteSelectedMonths) {
+        btnDeleteSelectedMonths.addEventListener('click', function () {
+            var count = Array.from(monthChecks).filter(function (c) { return c.checked; }).length;
+            if (!confirm('선택한 ' + count + '개월의 매출 기록을 통째로 삭제할까요?')) return;
+            document.getElementById('monthDeleteAction').value = 'deleteMonths';
+            monthDeleteForm.submit();
+        });
+    }
+    if (btnDeleteAllMonths) {
+        btnDeleteAllMonths.addEventListener('click', function () {
+            if (!confirm('이 매장의 매출 기록을 전부 삭제할까요? 이 작업은 되돌릴 수 없어요.')) return;
+            document.getElementById('monthDeleteAction').value = 'deleteAll';
+            monthDeleteForm.submit();
+        });
+    }
 </script>
 <jsp:include page="chat_widget.jsp" />
 </body>
