@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.List, com.moa.dao.SalesDAO, com.moa.model.SalesRecord"%>
+<%@ page import="java.util.List, java.util.ArrayList, com.moa.dao.SalesDAO, com.moa.model.SalesRecord, com.moa.dao.ReservationDAO, com.moa.model.Reservation, java.time.LocalDate"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,6 +15,15 @@
     Integer storeId = (Integer) session.getAttribute("storeId");
     List<SalesRecord> salesList = new SalesDAO().listByStore(storeId);
     int total = new SalesDAO().sumByStore(storeId);
+    List<Reservation> soonReservations = new ArrayList<>();
+    try {
+        LocalDate todayLd = LocalDate.now();
+        LocalDate cutoff = todayLd.plusDays(2);
+        for (Reservation r : new ReservationDAO().listUpcoming(storeId)) {
+            LocalDate d = LocalDate.parse(r.getReservationDate());
+            if (!d.isAfter(cutoff)) soonReservations.add(r);
+        }
+    } catch (Exception ignore) { /* 예약 테이블이 아직 없어도 마이페이지는 정상 동작해야 해요 */ }
     String currentMenu = "home";
 %>
 <div class="d-flex">
@@ -27,6 +36,20 @@
 
         <% if ("1".equals(request.getParameter("planUpdated"))) { %>
             <div class="alert alert-success"><i class="bi bi-check-circle"></i> 요금제가 변경됐어요!</div>
+        <% } %>
+
+        <% if (!soonReservations.isEmpty()) { %>
+        <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <i class="bi bi-bell-fill"></i> <b>다가오는 예약이 <%= soonReservations.size() %>건 있어요!</b>
+                <div style="font-size:12.5px; margin-top:4px;">
+                    <% for (int i = 0; i < Math.min(3, soonReservations.size()); i++) { Reservation r = soonReservations.get(i); %>
+                        <%= r.getReservationDate() %> <%= r.getReservationTime() %> · <%= r.getCustomerName() %>님 <%= r.getPartySize() %>명<%= i < Math.min(3, soonReservations.size())-1 ? " / " : "" %>
+                    <% } %>
+                </div>
+            </div>
+            <a href="reservation.jsp" class="btn-moa-sm btn-moa">예약 확인하기</a>
+        </div>
         <% } %>
 
         <div class="row g-3 mb-4">

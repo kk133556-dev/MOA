@@ -11,6 +11,8 @@
     <a href="stats.jsp" class="mypage-nav-link <%= "stats".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-bar-chart"></i> 매출 통계</a>
     <a href="todo.jsp" class="mypage-nav-link <%= "todo".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-journal-check"></i> 다이어리</a>
     <a href="inventory.jsp" class="mypage-nav-link <%= "inventory".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-box-seam"></i> 재고관리</a>
+    <a href="staff.jsp" class="mypage-nav-link <%= "staff".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-people"></i> 직원관리</a>
+    <a href="reservation.jsp" class="mypage-nav-link <%= "reservation".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-calendar-check"></i> 예약관리</a>
     <a href="ads_apply.jsp" class="mypage-nav-link <%= "ads".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-megaphone"></i> 광고신청</a>
     <a href="support.jsp" class="mypage-nav-link <%= "support".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-headset"></i> 고객센터</a>
     <a href="pricing.jsp" class="mypage-nav-link <%= "pricing".equals(currentMenu) ? "active" : "" %>"><i class="bi bi-credit-card"></i> 요금제</a>
