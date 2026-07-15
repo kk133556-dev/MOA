@@ -65,6 +65,9 @@
             <div class="col-lg-6">
                 <div class="moa-card mb-3">
                     <h6 class="mb-3"><i class="bi bi-clock-history"></i> 내 광고 신청 내역</h6>
+                    <% if ("1".equals(request.getParameter("deleted"))) { %>
+                        <div class="alert alert-success py-2" style="font-size:12.5px;"><i class="bi bi-check-circle"></i> 삭제됐어요.</div>
+                    <% } %>
                     <% if (myAds.isEmpty()) { %>
                         <p class="text-muted text-center py-4 mb-0">아직 신청한 광고가 없어요</p>
                     <% } else { for (Ad a : myAds) {
@@ -74,7 +77,14 @@
                         <div style="padding:11px 4px; border-bottom:1px solid var(--border);">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span style="font-size:13px;"><%= a.getBannerText() %></span>
-                                <span class="badge <%= badgeClass %>" style="font-size:10.5px;"><%= badgeText %></span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge <%= badgeClass %>" style="font-size:10.5px;"><%= badgeText %></span>
+                                    <form action="AdApplyServlet" method="post" onsubmit="return confirm('이 광고 신청을 삭제할까요?');">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="adId" value="<%= a.getAdId() %>">
+                                        <button type="submit" class="btn-moa-outline btn-moa-sm" style="padding:2px 8px; color:#DC2626;"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
                             </div>
                             <% if ("APPROVED".equals(a.getStatus())) { %>
                                 <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">

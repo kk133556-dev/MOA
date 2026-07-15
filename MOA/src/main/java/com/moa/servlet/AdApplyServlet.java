@@ -19,7 +19,15 @@ public class AdApplyServlet extends HttpServlet {
             return;
         }
         int storeId = (Integer) session.getAttribute("storeId");
+        String action = req.getParameter("action"); // null 또는 "apply" = 신청, "delete" = 삭제
+
         try {
+            if ("delete".equals(action)) {
+                int adId = Integer.parseInt(req.getParameter("adId"));
+                new AdDAO().deleteOwnedByStore(adId, storeId);
+                resp.sendRedirect("ads_apply.jsp?deleted=1");
+                return;
+            }
             new AdDAO().insert(storeId, req.getParameter("bannerText"));
             resp.sendRedirect("ads_apply.jsp?done=1");
         } catch (SQLException e) {

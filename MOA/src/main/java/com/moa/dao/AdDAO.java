@@ -81,6 +81,17 @@ public class AdDAO {
         }
     }
 
+    // 소상공인이 본인이 신청한 광고를 지울 때 써요. store_id까지 같이 조건에 넣어서
+    // 다른 매장 광고를 실수로/의도적으로 못 지우게 막아요.
+    public boolean deleteOwnedByStore(int adId, int storeId) throws SQLException {
+        String sql = "DELETE FROM ads WHERE ad_id = ? AND store_id = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, adId);
+            ps.setInt(2, storeId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public void deleteByStore(int storeId, Connection conn) throws SQLException {
         String sql = "DELETE FROM ads WHERE store_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
