@@ -60,7 +60,8 @@ public class OcrReceiptServlet extends HttpServlet {
         "관리자", "처리자", "주문순서", "이용해", "행복", "전화", "사업자", "포인트", "할인율", "부가세", "과세물품",
         "면세물품", "봉사료", "품명", "단가", "수량", "금액", "영수증", "매장", "테이블번호", "공병매출", "구매액",
         "결제금액", "결제", "확인번호", "승인번호", "자진발급", "소득공제", "hometax", "등록을", "해주시기",
-        "교환", "환불", "방침", "지참", "구매점포", "제외", "pos-", "no:", "담당"
+        "교환", "환불", "방침", "지참", "구매점포", "제외", "pos-", "no:", "담당",
+        "신용승인", "할부", "가맹점", "승인금액", "승인일시"
     };
 
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -369,7 +370,10 @@ public class OcrReceiptServlet extends HttpServlet {
             if (numericTail.isEmpty()) continue; // 숫자 없는 줄(매장명 등)은 품목이 아니라고 보고 건너뜀
 
             String name = String.join(" ", java.util.Arrays.copyOfRange(tokens, 0, idx + 1)).trim();
-            if (name.isEmpty() || name.length() > 30) continue;
+            // 앞의 특수문자(・, ·, *, -, > 등)는 떼고 이름 길이를 판단해요. 이런 특수문자만
+            // 달랑 남는 건 대부분 요약줄이 잘못 쪼개진 파편이지 진짜 품목명이 아니에요.
+            String nameForCheck = name.replaceAll("^[·・*\\->\\s]+", "").trim();
+            if (name.isEmpty() || name.length() > 30 || nameForCheck.length() < 2) continue;
 
             String qty, price;
             if (numericTail.size() >= 3) {

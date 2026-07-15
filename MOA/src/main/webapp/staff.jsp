@@ -11,12 +11,12 @@
     <style>
         .cal-table { width:100%; border-collapse:collapse; table-layout:fixed; }
         .cal-table th { text-align:center; font-size:12px; color:var(--text-muted); padding:8px 0; }
-        .cal-table td { border:1px solid var(--border); vertical-align:top; height:96px; padding:5px; font-size:11.5px; }
+        .cal-table td { border:1px solid var(--border); vertical-align:top; height:96px; padding:5px; font-size:11.5px; cursor:pointer; transition:background .15s ease; }
+        .cal-table td.cal-day:hover { background:rgba(79,70,229,0.06); }
         .cal-day-num { font-weight:700; font-size:12px; margin-bottom:4px; }
         .cal-today { background:rgba(79,70,229,0.05); }
-        .cal-outside { background:#FAFAFC; color:#D1D5DB; }
-        .cal-badge { display:flex; align-items:center; justify-content:space-between; background:#EEF2FF; border-radius:5px; padding:2px 5px; margin-bottom:3px; font-size:10.5px; }
-        .cal-badge .del-x { cursor:pointer; color:#DC2626; }
+        .cal-outside { background:#FAFAFC; color:#D1D5DB; cursor:default; }
+        .cal-badge { background:#EEF2FF; border-radius:5px; padding:2px 5px; margin-bottom:3px; font-size:10.5px; }
         .role-chip { font-size:9px; padding:1px 4px; border-radius:4px; margin-left:3px; }
         .role-알바 { background:#DBEAFE; color:#1D4ED8; }
         .role-직원 { background:#DCFCE7; color:#166534; }
@@ -58,7 +58,7 @@
 
         <div class="row g-3 mb-3">
             <div class="col-lg-4">
-                <div class="moa-card mb-3">
+                <div class="moa-card">
                     <h6 class="mb-3"><i class="bi bi-person-plus"></i> 직원 추가</h6>
                     <form action="EmployeeServlet" method="post">
                         <div class="mb-2"><label class="form-label" style="font-size:12px;">이름</label><input type="text" name="name" class="form-control" required></div>
@@ -76,8 +76,7 @@
                         <button type="submit" class="btn-moa w-100 justify-content-center">추가</button>
                     </form>
                 </div>
-
-                <div class="moa-card mb-3">
+                <div class="moa-card mt-3">
                     <h6 class="mb-3"><i class="bi bi-people-fill"></i> 직원 목록 (<%= employees.size() %>명)</h6>
                     <% if (employees.isEmpty()) { %>
                         <p class="text-muted text-center py-3 mb-0" style="font-size:13px;">등록된 직원이 없어요</p>
@@ -96,29 +95,6 @@
                         </div>
                     <% } } %>
                 </div>
-
-                <div class="moa-card">
-                    <h6 class="mb-3"><i class="bi bi-calendar-plus"></i> 근무 일정 추가</h6>
-                    <% if (employees.isEmpty()) { %>
-                        <p class="text-muted" style="font-size:12.5px;">먼저 직원을 등록해주세요.</p>
-                    <% } else { %>
-                        <form id="scheduleForm">
-                            <div class="mb-2">
-                                <label class="form-label" style="font-size:12px;">직원</label>
-                                <select id="schedEmployee" class="form-control">
-                                    <% for (Employee e : employees) { %><option value="<%= e.getEmployeeId() %>"><%= e.getName() %> (<%= e.getRole() %>)</option><% } %>
-                                </select>
-                            </div>
-                            <div class="mb-2"><label class="form-label" style="font-size:12px;">날짜</label><input type="date" id="schedDate" class="form-control" value="<%= today %>"></div>
-                            <div class="row g-2 mb-2">
-                                <div class="col-6"><label class="form-label" style="font-size:12px;">시작</label><input type="time" id="schedStart" class="form-control"></div>
-                                <div class="col-6"><label class="form-label" style="font-size:12px;">종료</label><input type="time" id="schedEnd" class="form-control"></div>
-                            </div>
-                            <div class="mb-3"><input type="text" id="schedMemo" class="form-control" placeholder="메모 (선택)"></div>
-                            <button type="button" id="addSchedBtn" class="btn-moa w-100 justify-content-center">근무 일정 추가</button>
-                        </form>
-                    <% } %>
-                </div>
             </div>
 
             <div class="col-lg-8">
@@ -128,6 +104,10 @@
                         <h6 class="mb-0"><%= ym.getYear() %>년 <%= ym.getMonthValue() %>월</h6>
                         <a href="staff.jsp?ym=<%= nextYm %>" class="btn-moa-outline btn-moa-sm"><i class="bi bi-chevron-right"></i></a>
                     </div>
+                    <% if (employees.isEmpty()) { %>
+                        <div class="alert alert-warning py-2 mb-3" style="font-size:12.5px;"><i class="bi bi-exclamation-triangle"></i> 먼저 왼쪽에서 직원을 등록해야 날짜 클릭으로 근무를 배정할 수 있어요.</div>
+                    <% } %>
+                    <p style="font-size:11.5px; color:var(--text-muted);"><i class="bi bi-info-circle"></i> 날짜를 클릭하면 그 날짜에 근무자를 바로 배정할 수 있어요.</p>
                     <table class="cal-table">
                         <thead><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr></thead>
                         <tbody>
@@ -147,13 +127,10 @@
                                     boolean isToday = cellDate.equals(today);
                                     List<WorkSchedule> daySched = byDate.get(cellDate);
                             %>
-                                    <td class="<%= isToday ? "cal-today" : "" %>" data-date="<%= cellDate %>">
+                                    <td class="cal-day <%= isToday ? "cal-today" : "" %>" data-date="<%= cellDate %>">
                                         <div class="cal-day-num"><%= dayCounter %></div>
                                         <% if (daySched != null) { for (WorkSchedule w : daySched) { %>
-                                            <div class="cal-badge">
-                                                <span><%= w.getEmployeeName() %><% if (w.getShiftStart() != null) { %> <%= w.getShiftStart() %><% } %></span>
-                                                <i class="bi bi-x del-x" data-id="<%= w.getScheduleId() %>"></i>
-                                            </div>
+                                            <div class="cal-badge"><%= w.getEmployeeName() %><% if (w.getShiftStart() != null) { %> <%= w.getShiftStart() %><% } %></div>
                                         <% } } %>
                                     </td>
                                 <% dayCounter++; } %>
@@ -168,40 +145,105 @@
     </main>
 </div>
 
+<!-- 날짜 클릭 시 뜨는 근무 배정 모달 -->
+<div class="modal fade" id="dayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="dayModalTitle"><i class="bi bi-calendar-event"></i> 근무 배정</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="mb-2" style="font-size:13px;">이 날 근무자</h6>
+                <div id="dayScheduleList" class="mb-3"></div>
+                <hr>
+                <h6 class="mb-2" style="font-size:13px;"><i class="bi bi-plus-circle"></i> 근무자 추가</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <select id="modalEmployee" class="form-control form-control-sm">
+                            <% for (Employee e : employees) { %><option value="<%= e.getEmployeeId() %>"><%= e.getName() %> (<%= e.getRole() %>)</option><% } %>
+                        </select>
+                    </div>
+                    <div class="col-3"><input type="time" id="modalStart" class="form-control form-control-sm"></div>
+                    <div class="col-3"><input type="time" id="modalEnd" class="form-control form-control-sm"></div>
+                </div>
+                <input type="text" id="modalMemo" class="form-control form-control-sm mb-2" placeholder="메모 (선택)">
+                <button type="button" id="modalAddBtn" class="btn-moa w-100 justify-content-center btn-moa-sm">이 날짜에 추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    var currentYm = '<%= ymStr %>';
+    var scheduleData = {}; // 날짜별 [{id, name, role, start, end}] - 서버에서 렌더된 값 기반으로 채워요.
+    <%
+        for (Map.Entry<String, List<WorkSchedule>> entry : byDate.entrySet()) {
+    %>
+        scheduleData['<%= entry.getKey() %>'] = [
+        <% List<WorkSchedule> list = entry.getValue();
+           for (int i = 0; i < list.size(); i++) { WorkSchedule w = list.get(i); %>
+            { id: <%= w.getScheduleId() %>, name: '<%= w.getEmployeeName() %>', role: '<%= w.getEmployeeRole() %>', start: '<%= w.getShiftStart() != null ? w.getShiftStart() : "" %>', end: '<%= w.getShiftEnd() != null ? w.getShiftEnd() : "" %>' }<%= i < list.size()-1 ? "," : "" %>
+        <% } %>
+        ];
+    <% } %>
 
-    document.getElementById('addSchedBtn') && document.getElementById('addSchedBtn').addEventListener('click', function () {
-        var params = new URLSearchParams();
-        params.append('action', 'add');
-        params.append('employeeId', document.getElementById('schedEmployee').value);
-        params.append('workDate', document.getElementById('schedDate').value);
-        params.append('shiftStart', document.getElementById('schedStart').value);
-        params.append('shiftEnd', document.getElementById('schedEnd').value);
-        params.append('memo', document.getElementById('schedMemo').value);
-        if (!params.get('workDate')) { alert('날짜를 선택해주세요.'); return; }
-        fetch('WorkScheduleServlet', { method: 'POST', body: params })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.result === 'ok') {
-                    var targetYm = params.get('workDate').substring(0, 7);
-                    location.href = 'staff.jsp?ym=' + targetYm;
-                } else {
-                    alert('추가에 실패했어요.');
-                }
+    var dayModalEl = document.getElementById('dayModal');
+    var dayModal = new bootstrap.Modal(dayModalEl);
+    var currentDate = null;
+
+    function renderDaySchedule(dateStr) {
+        var list = scheduleData[dateStr] || [];
+        var container = document.getElementById('dayScheduleList');
+        if (list.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-2 mb-0" style="font-size:12.5px;">배정된 근무자가 없어요</p>';
+            return;
+        }
+        container.innerHTML = '';
+        list.forEach(function (item) {
+            var row = document.createElement('div');
+            row.className = 'd-flex justify-content-between align-items-center';
+            row.style.cssText = 'padding:6px 2px; border-bottom:1px solid var(--border);';
+            row.innerHTML = '<span style="font-size:13px;">' + item.name + ' <span class="role-chip role-' + item.role + '">' + item.role + '</span>' +
+                (item.start ? ' <span style="color:var(--text-muted); font-size:11.5px;">' + item.start + (item.end ? '~' + item.end : '') + '</span>' : '') + '</span>' +
+                '<i class="bi bi-trash" style="cursor:pointer; color:#DC2626;" data-id="' + item.id + '"></i>';
+            row.querySelector('.bi-trash').addEventListener('click', function () {
+                if (!confirm('삭제할까요?')) return;
+                var params = new URLSearchParams();
+                params.append('action', 'delete');
+                params.append('scheduleId', item.id);
+                fetch('WorkScheduleServlet', { method: 'POST', body: params }).then(function () { location.reload(); });
             });
-    });
+            container.appendChild(row);
+        });
+    }
 
-    document.querySelectorAll('.del-x').forEach(function (el) {
-        el.addEventListener('click', function () {
-            if (!confirm('이 근무 일정을 삭제할까요?')) return;
-            var params = new URLSearchParams();
-            params.append('action', 'delete');
-            params.append('scheduleId', el.dataset.id);
-            fetch('WorkScheduleServlet', { method: 'POST', body: params })
-                .then(function () { location.href = 'staff.jsp?ym=' + currentYm; });
+    document.querySelectorAll('.cal-day').forEach(function (td) {
+        td.addEventListener('click', function () {
+            currentDate = td.dataset.date;
+            document.getElementById('dayModalTitle').innerHTML = '<i class="bi bi-calendar-event"></i> ' + currentDate + ' 근무 배정';
+            renderDaySchedule(currentDate);
+            dayModal.show();
         });
     });
+
+    var modalAddBtn = document.getElementById('modalAddBtn');
+    if (modalAddBtn) {
+        modalAddBtn.addEventListener('click', function () {
+            var empSelect = document.getElementById('modalEmployee');
+            if (!empSelect || !empSelect.value) { alert('직원을 먼저 등록해주세요.'); return; }
+            var params = new URLSearchParams();
+            params.append('action', 'add');
+            params.append('employeeId', empSelect.value);
+            params.append('workDate', currentDate);
+            params.append('shiftStart', document.getElementById('modalStart').value);
+            params.append('shiftEnd', document.getElementById('modalEnd').value);
+            params.append('memo', document.getElementById('modalMemo').value);
+            fetch('WorkScheduleServlet', { method: 'POST', body: params })
+                .then(function (r) { return r.json(); })
+                .then(function () { location.href = 'staff.jsp?ym=' + currentDate.substring(0, 7); });
+        });
+    }
 </script>
 <jsp:include page="chat_widget.jsp" />
 </body>
