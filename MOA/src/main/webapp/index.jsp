@@ -52,20 +52,21 @@
 <div class="alert alert-danger text-center mb-0 rounded-0"><i class="bi bi-slash-circle"></i> 이용이 정지된 계정이에요. 고객센터로 문의해주세요.</div>
 <% } %>
 
-<section class="hero-pro">
-    <div class="container">
+<section class="hero-pro" style="position:relative; overflow:hidden;">
+    <i class="bi bi-receipt hero-bg-icon"></i>
+    <div class="container" style="position:relative; z-index:1;">
         <div class="row align-items-center g-5">
-            <div class="col-lg-6">
+            <div class="col-lg-7">
                 <span class="badge-pill"><i class="bi bi-shop"></i> 사업자등록증 등록 소상공인 전용</span>
                 <h1>영수증 한 장이면<br><span class="grad-text">매출이 저절로</span> 정리돼요</h1>
-                <p class="lead">영수증 사진 한 장이면 AI가 매출을 자동으로 분석해드려요.<br class="d-none d-md-block">카드·현금 매출부터 순수익, 일별·월별 통계까지 한눈에.</p>
+                <p class="lead" style="font-size:16.5px; max-width:480px;">영수증 사진 한 장이면 AI가 매출을 자동으로 분석해드려요.<br class="d-none d-md-block">카드·현금 매출부터 순수익, 일별·월별 통계까지 한눈에.</p>
                 <div class="d-flex gap-2 mt-4">
                     <a href="<%= ctaHref %>" class="btn-moa" style="font-size:15px; padding:13px 28px;"><i class="bi bi-arrow-right-circle"></i> <%= ctaText %></a>
                     <a href="#features" class="btn-moa-outline" style="font-size:15px; padding:13px 24px;">기능 둘러보기</a>
                 </div>
             </div>
 
-            <div class="col-lg-6">
+            <div class="col-lg-5">
                 <% if (!loggedIn) { %>
                     <div class="hero-login-panel reveal">
                         <h6><i class="bi bi-box-arrow-in-right"></i> 로그인</h6>

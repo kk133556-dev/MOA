@@ -64,7 +64,11 @@ table.moa-table th { background: #F9FAFB; font-size: 11.5px; color: var(--text-m
     padding: 64px 0 50px; border-bottom:1px solid var(--border);
 }
 .hero-pro .badge-pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--primary); background:rgba(79,70,229,0.08); padding:7px 14px; border-radius:20px; }
-.hero-pro h1 { font-size:34px; font-weight:800; letter-spacing:-1px; line-height:1.28; margin-top:16px; }
+.hero-pro h1 { font-size:52px; font-weight:800; letter-spacing:-1.5px; line-height:1.22; margin-top:20px; }
+
+/* 히어로 배경에 은은하게 깔리는 대형 아이콘 - 텍스트/패널 사이 빈 공간을 시각적으로 채워줘요 */
+.hero-bg-icon { position:absolute; right:-40px; top:50%; transform:translateY(-50%) rotate(-12deg); font-size:420px; color:var(--primary); opacity:0.05; z-index:0; pointer-events:none; }
+@media (max-width: 991px) { .hero-bg-icon { display:none; } }
 .hero-pro .grad-text { color: var(--primary); }
 .hero-pro p.lead { color:var(--text-muted); font-size:15px; margin-top:12px; line-height:1.6; }
 

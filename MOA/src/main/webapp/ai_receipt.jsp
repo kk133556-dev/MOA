@@ -77,9 +77,18 @@
 
             <div class="col-lg-6">
                 <div class="moa-card" style="position:sticky; top:20px;">
-                    <h6 class="mb-1"><i class="bi bi-table"></i> 저장되면 이렇게 기록돼요</h6>
-                    <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px;">마이페이지 매출 기록에 실시간으로 미리 어떻게 쌓이는지 보여드려요.</p>
-                    <table class="preview-table">
+                    <h6 class="mb-1"><i class="bi bi-file-earmark-spreadsheet"></i> 저장될 매출 기록 미리보기</h6>
+                    <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px;">왼쪽에서 셀을 고치면 여기도 실시간으로 같이 바뀌어요. "이 매출 저장하기"를 누르면 이 내용 그대로 저장돼요.</p>
+
+                    <table class="excel-table mb-3" id="pvItemTable">
+                        <thead><tr><th>항목</th><th>수량</th><th>단가</th><th>금액</th></tr></thead>
+                        <tbody id="pvItemBody"></tbody>
+                    </table>
+                    <div class="text-center py-3" id="pvEmptyMsg" style="color:var(--text-muted); font-size:12.5px;">
+                        <i class="bi bi-camera"></i><br>영수증을 업로드하면 여기에 실시간 미리보기가 나와요
+                    </div>
+
+                    <table class="preview-table" id="pvSummaryTable" style="display:none;">
                         <thead><tr><th>날짜</th><th>총매출</th><th>카드</th><th>현금</th><th>주류</th><th>수수료</th><th>기타지출</th></tr></thead>
                         <tbody>
                             <tr>
@@ -93,9 +102,6 @@
                             </tr>
                         </tbody>
                     </table>
-                    <div class="text-center mt-3" id="pvEmptyMsg" style="color:var(--text-muted); font-size:12.5px;">
-                        <i class="bi bi-arrow-left"></i> 영수증을 업로드하면 여기에 미리보기가 나와요
-                    </div>
                 </div>
             </div>
         </div>
@@ -138,6 +144,7 @@
                 document.getElementById('fReceiptImage').value = data.imagePath || '';
                 document.getElementById('pvDate').textContent = new Date().toISOString().slice(0, 10);
                 document.getElementById('pvEmptyMsg').style.display = 'none';
+                document.getElementById('pvSummaryTable').style.display = 'table';
                 recalc();
             })
             .catch(function () {
@@ -210,6 +217,19 @@
         document.getElementById('pvLiquor').textContent = Number(document.getElementById('liquorCell').textContent).toLocaleString() + '원';
         document.getElementById('pvFee').textContent = Number(document.getElementById('feeCell').textContent).toLocaleString() + '원';
         document.getElementById('pvOther').textContent = Number(document.getElementById('otherCell').textContent).toLocaleString() + '원';
+
+        // 왼쪽 품목표를 우측에 그대로 미러링해요 (같은 셀 수정 -> 양쪽 다 실시간 반영)
+        var pvBody = document.getElementById('pvItemBody');
+        pvBody.innerHTML = '';
+        document.querySelectorAll('#itemBody tr').forEach(function (tr) {
+            var name = tr.children[0].textContent;
+            var qty = tr.querySelector('.qty').textContent;
+            var price = tr.querySelector('.price').textContent;
+            var amount = tr.querySelector('.amount').textContent;
+            var pvTr = document.createElement('tr');
+            pvTr.innerHTML = '<td>' + name + '</td><td>' + qty + '</td><td>' + price + '</td><td>' + amount + '</td>';
+            pvBody.appendChild(pvTr);
+        });
     }
 
     itemBody.addEventListener('input', recalc);
@@ -229,6 +249,8 @@
         });
         document.getElementById('fReceiptImage').value = '';
         document.getElementById('pvEmptyMsg').style.display = 'block';
+        document.getElementById('pvSummaryTable').style.display = 'none';
+        document.getElementById('pvItemBody').innerHTML = '';
         fileInput.value = '';
     });
 
