@@ -43,6 +43,9 @@ public class ExportCsvServlet extends HttpServlet {
                 buildMonthlySheet(workbook, monthly, storeName, headerStyle, moneyStyle, totalStyle, titleStyle);
                 buildDetailSheet(workbook, detail, headerStyle, moneyStyle, totalStyle, titleStyle);
 
+                // 수식이 캐시된 옛날 값 대신 파일을 열자마자 바로 다시 계산되게 해요.
+                workbook.setForceFormulaRecalculation(true);
+
                 resp.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
                 resp.setHeader("Content-Disposition", "attachment; filename=\"moa_sales_report.xlsx\"");
                 workbook.write(resp.getOutputStream());
@@ -75,9 +78,15 @@ public class ExportCsvServlet extends HttpServlet {
         for (Object[] row : monthly) {
             Row dataRow = sheet.createRow(r);
             dataRow.createCell(0).setCellValue((String) row[0]);
+            int excelRowNum = r + 1; // POI는 0-index, 엑셀 수식은 1-index라서 변환
             for (int col = 1; col <= 6; col++) {
                 Cell c = dataRow.createCell(col);
-                c.setCellValue((Integer) row[col]);
+                if (col == 1) {
+                    // 총매출 = 카드매출(C) + 현금매출(D) - 엑셀에서 직접 수정해도 자동으로 재계산돼요.
+                    c.setCellFormula("C" + excelRowNum + "+D" + excelRowNum);
+                } else {
+                    c.setCellValue((Integer) row[col]);
+                }
                 c.setCellStyle(moneyStyle);
             }
             r++;
@@ -130,9 +139,15 @@ public class ExportCsvServlet extends HttpServlet {
             dataRow.createCell(0).setCellValue(rec.getSalesDate().toString());
             int[] values = { rec.getTotalAmount(), rec.getCardAmount(), rec.getCashAmount(),
                               rec.getLiquorAmount(), rec.getFeeAmount(), rec.getOtherExpense() };
+            int excelRowNum = r + 1;
             for (int col = 1; col <= 6; col++) {
                 Cell c = dataRow.createCell(col);
-                c.setCellValue(values[col - 1]);
+                if (col == 1) {
+                    // 총매출 = 카드매출(C) + 현금매출(D)
+                    c.setCellFormula("C" + excelRowNum + "+D" + excelRowNum);
+                } else {
+                    c.setCellValue(values[col - 1]);
+                }
                 c.setCellStyle(moneyStyle);
             }
             r++;

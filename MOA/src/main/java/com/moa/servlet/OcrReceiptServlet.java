@@ -44,6 +44,11 @@ public class OcrReceiptServlet extends HttpServlet {
     // 금액/수량으로 볼 수 있는 "순수 숫자 토큰": 0~3자리 또는 1,000단위 콤마 형식, 할인 표시용 음수도 인정해요.
     private static final Pattern NUMERIC_TOKEN = Pattern.compile("^-?[0-9]{1,3}(,[0-9]{3})*$");
 
+    // "3개", "2병", "3인분", "500ml" 처럼 숫자 뒤에 단위가 붙은 수량 표기도 수량으로 인식해요.
+    // 괄호 안 숫자만 뽑아서 숫자 토큰으로 취급해요 (단위 글자는 버려요).
+    private static final Pattern QTY_WITH_UNIT = Pattern.compile(
+        "^([0-9]{1,3})(개|병|캔|잔|봉|팩|세트|장|줄|판|모|알|인분|인|수|그릇|접시|공기|박스|근|통|ea|EA|ml|mL|ML|kg|Kg|KG|g|G|L|l)$");
+
     // 영수증에 흔히 나오는 "품목이 아닌 줄"들 - 이 단어가 포함된 줄은 품목으로 안 봐요.
     // OCR이 한글 자모 사이를 띄어 인식하는 경우가 많아서("부 가 세" 등), 비교 전에 공백은 제거해요.
     private static final String[] NON_ITEM_KEYWORDS = {
@@ -274,9 +279,20 @@ public class OcrReceiptServlet extends HttpServlet {
 
             List<String> numericTail = new ArrayList<>();
             int idx = tokens.length - 1;
-            while (idx >= 0 && numericTail.size() < 3 && NUMERIC_TOKEN.matcher(tokens[idx]).matches()) {
-                numericTail.add(0, tokens[idx].replace(",", ""));
-                idx--;
+            while (idx >= 0 && numericTail.size() < 3) {
+                String tok = tokens[idx];
+                if (NUMERIC_TOKEN.matcher(tok).matches()) {
+                    numericTail.add(0, tok.replace(",", ""));
+                    idx--;
+                } else {
+                    Matcher unitMatch = QTY_WITH_UNIT.matcher(tok);
+                    if (unitMatch.matches()) {
+                        numericTail.add(0, unitMatch.group(1)); // 단위 글자는 버리고 숫자만
+                        idx--;
+                    } else {
+                        break;
+                    }
+                }
             }
             if (numericTail.isEmpty()) continue; // 숫자 없는 줄(매장명 등)은 품목이 아니라고 보고 건너뜀
 
@@ -297,9 +313,16 @@ public class OcrReceiptServlet extends HttpServlet {
                 } catch (NumberFormatException e) {
                     qtyVal = 1; amountVal = Integer.parseInt(numericTail.get(1).replaceAll("[^0-9-]", "0"));
                 }
-                if (qtyVal <= 0 || qtyVal > 100) { qtyVal = 1; } // 비정상적인 수량이면 1로 보정
-                qty = String.valueOf(qtyVal);
-                price = String.valueOf(qtyVal == 0 ? amountVal : amountVal / qtyVal);
+                // 두 숫자가 똑같으면(예: "100 100") 품목코드 끝자리 숫자가 수량 자리로 잘못 끼어든
+                // 경우가 많아요 - 그럴 땐 수량 1개에 단가가 그 값이라고 보는 게 훨씬 자연스러워요.
+                if (qtyVal == amountVal) {
+                    qty = "1";
+                    price = String.valueOf(amountVal);
+                } else {
+                    if (qtyVal <= 0 || qtyVal > 30) { qtyVal = 1; } // 한 줄 수량이 30개 넘는 건 비정상으로 보고 보정
+                    qty = String.valueOf(qtyVal);
+                    price = String.valueOf(qtyVal == 0 ? amountVal : amountVal / qtyVal);
+                }
             } else {
                 price = numericTail.get(0);
                 qty = "1";
