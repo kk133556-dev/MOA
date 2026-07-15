@@ -41,14 +41,17 @@ public class OcrReceiptServlet extends HttpServlet {
             : "여기에_로컬_테스트용_API_키_입력";
     private static final String VISION_URL = "https://vision.googleapis.com/v1/images:annotate?key=" + GOOGLE_VISION_API_KEY;
 
-    // 금액/수량으로 볼 수 있는 "순수 숫자 토큰": 0~3자리 또는 1,000단위 콤마 형식만 인정해요.
-    private static final Pattern NUMERIC_TOKEN = Pattern.compile("^[0-9]{1,3}(,[0-9]{3})*$");
+    // 금액/수량으로 볼 수 있는 "순수 숫자 토큰": 0~3자리 또는 1,000단위 콤마 형식, 할인 표시용 음수도 인정해요.
+    private static final Pattern NUMERIC_TOKEN = Pattern.compile("^-?[0-9]{1,3}(,[0-9]{3})*$");
 
     // 영수증에 흔히 나오는 "품목이 아닌 줄"들 - 이 단어가 포함된 줄은 품목으로 안 봐요.
+    // OCR이 한글 자모 사이를 띄어 인식하는 경우가 많아서("부 가 세" 등), 비교 전에 공백은 제거해요.
     private static final String[] NON_ITEM_KEYWORDS = {
-        "합계", "총액", "총 금액", "받을", "받은", "거스름", "카드", "현금", "테이블", "일시", "날짜",
-        "관리자", "처리자", "주문순서", "이용해", "행복", "전화", "사업자", "포인트", "할인", "부가세",
-        "봉사료", "품명", "품 명", "단가", "수량", "금액", "영수증", "매장", "테이블번호"
+        "합계", "총구매액", "총액", "총금액", "받을", "받은", "거스름", "카드", "현금", "테이블", "일시", "날짜",
+        "관리자", "처리자", "주문순서", "이용해", "행복", "전화", "사업자", "포인트", "할인율", "부가세", "과세물품",
+        "면세물품", "봉사료", "품명", "단가", "수량", "금액", "영수증", "매장", "테이블번호", "공병매출", "구매액",
+        "결제금액", "결제", "확인번호", "승인번호", "자진발급", "소득공제", "hometax", "등록을", "해주시기",
+        "교환", "환불", "방침", "지참", "구매점포", "제외", "pos-", "no:", "담당"
     };
 
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -161,14 +164,94 @@ public class OcrReceiptServlet extends HttpServlet {
             throw new IOException("Google Vision 오류: " + err.optString("message", "알 수 없는 오류"));
         }
 
+        // Vision의 자체 문단(줄바꿈) 판단은 세로로 긴 영수증에서 "품명 열 -> 수량 열 -> 금액 열" 순으로
+        // 따로따로 읽어버리는 경우가 많아서 못 믿어요. 대신 단어별 좌표(textAnnotations)를 받아서
+        // 실제 화면상 "같은 높이에 있는 단어들"끼리 직접 한 줄로 다시 묶어요.
+        JSONArray wordAnnotations = first.optJSONArray("textAnnotations");
+        if (wordAnnotations != null && wordAnnotations.length() > 1) {
+            return rebuildLinesFromWords(wordAnnotations);
+        }
+
+        // 좌표 정보가 없으면(드묾) 그냥 Vision이 준 원문 텍스트라도 사용해요.
         JSONObject fullText = first.optJSONObject("fullTextAnnotation");
         return fullText != null ? fullText.optString("text", "") : "";
     }
 
+    private static class WordBox {
+        String text;
+        double xLeft;
+        double yCenter;
+        double height;
+    }
+
+    // textAnnotations[0]은 전체 텍스트 뭉치라서 건너뛰고, [1]부터가 단어 하나하나의 좌표예요.
+    // y좌표(세로 위치)가 비슷한 단어들끼리 한 줄로 묶은 다음, 그 줄 안에서는 x좌표(가로 위치) 순으로 정렬해요.
+    private String rebuildLinesFromWords(JSONArray wordAnnotations) {
+        List<WordBox> words = new ArrayList<>();
+        for (int i = 1; i < wordAnnotations.length(); i++) {
+            JSONObject w = wordAnnotations.getJSONObject(i);
+            String text = w.optString("description", "");
+            if (text.isEmpty()) continue;
+            JSONObject boundingPoly = w.optJSONObject("boundingPoly");
+            if (boundingPoly == null) continue;
+            JSONArray vertices = boundingPoly.optJSONArray("vertices");
+            if (vertices == null || vertices.length() == 0) continue;
+
+            double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+            for (int v = 0; v < vertices.length(); v++) {
+                JSONObject pt = vertices.getJSONObject(v);
+                double x = pt.optDouble("x", 0);
+                double y = pt.optDouble("y", 0);
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+            WordBox box = new WordBox();
+            box.text = text;
+            box.xLeft = minX;
+            box.yCenter = (minY + maxY) / 2.0;
+            box.height = Math.max(1, maxY - minY);
+            words.add(box);
+        }
+
+        words.sort((a, b) -> Double.compare(a.yCenter, b.yCenter));
+
+        List<List<WordBox>> lines = new ArrayList<>();
+        List<WordBox> currentLine = new ArrayList<>();
+        double lineRefY = -1, lineRefHeight = 20;
+        for (WordBox w : words) {
+            if (currentLine.isEmpty() || Math.abs(w.yCenter - lineRefY) <= lineRefHeight * 0.6) {
+                currentLine.add(w);
+                // 줄의 기준 y/높이는 지금까지 넣은 단어들의 평균으로 계속 갱신해요.
+                double sumY = 0, sumH = 0;
+                for (WordBox cw : currentLine) { sumY += cw.yCenter; sumH += cw.height; }
+                lineRefY = sumY / currentLine.size();
+                lineRefHeight = sumH / currentLine.size();
+            } else {
+                lines.add(currentLine);
+                currentLine = new ArrayList<>();
+                currentLine.add(w);
+                lineRefY = w.yCenter;
+                lineRefHeight = w.height;
+            }
+        }
+        if (!currentLine.isEmpty()) lines.add(currentLine);
+
+        StringBuilder sb = new StringBuilder();
+        for (List<WordBox> line : lines) {
+            line.sort((a, b) -> Double.compare(a.xLeft, b.xLeft));
+            for (int i = 0; i < line.size(); i++) {
+                if (i > 0) sb.append(' ');
+                sb.append(line.get(i).text);
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
+
     // OCR로 읽은 영수증 텍스트를 "품목 / 수량 / 단가" 라인들로 최대한 잘라내요.
-    // 대부분의 한국 영수증은 한 줄에 "품목명  단가  수량  금액" 순으로 나열되니까,
-    // 줄 끝에서부터 숫자처럼 보이는 토큰을 최대 3개까지 모아서 [단가, 수량, 금액]으로 봐요.
-    // (단가 * 수량 = 금액이 되도록, 화면에서는 단가/수량만 넘기고 금액은 프론트에서 다시 계산해요)
+    // 영수증 형식이 두 가지예요: "품목명 단가 수량 금액"(4열) 또는 "품목명 수량 금액"(3열, 단가 생략).
+    // 어느 쪽이든 화면에서는 수량/단가를 넘기고, 금액은 프론트에서 수량×단가로 다시 계산해요.
     private List<String[]> parseReceiptText(String text) {
         List<String[]> items = new ArrayList<>();
         if (text == null || text.isEmpty()) return items;
@@ -178,8 +261,10 @@ public class OcrReceiptServlet extends HttpServlet {
             String line = rawLine.trim();
             if (line.isEmpty()) continue;
 
+            // OCR이 한글 자모 사이를 띄어 인식하는 경우가 있어서("부 가 세" 등), 공백 없앤 버전으로도 비교해요.
+            String normalized = line.replaceAll("\\s+", "");
             for (String kw : NON_ITEM_KEYWORDS) {
-                if (line.contains(kw)) continue outer;
+                if (normalized.contains(kw.replaceAll("\\s+", ""))) continue outer;
             }
             // 날짜/시간처럼 보이는 줄(2024-02-24, 12:32:25 등)도 품목이 아니라고 보고 건너뛰어요.
             if (line.matches(".*\\d{4}-\\d{2}-\\d{2}.*") || line.matches(".*\\d{1,2}:\\d{2}:\\d{2}.*")) continue;
@@ -204,9 +289,17 @@ public class OcrReceiptServlet extends HttpServlet {
                 price = numericTail.get(0);
                 qty = numericTail.get(1);
             } else if (numericTail.size() == 2) {
-                // 열이 2개뿐이면 [단가, 금액]으로 보고 수량은 1로 가정해요 (완벽하진 않아요).
-                price = numericTail.get(0);
-                qty = "1";
+                // 열이 2개면 대부분 [수량, 금액] 형식이에요 (단가 생략). 단가는 금액÷수량으로 역산해요.
+                int qtyVal, amountVal;
+                try {
+                    qtyVal = Integer.parseInt(numericTail.get(0));
+                    amountVal = Integer.parseInt(numericTail.get(1));
+                } catch (NumberFormatException e) {
+                    qtyVal = 1; amountVal = Integer.parseInt(numericTail.get(1).replaceAll("[^0-9-]", "0"));
+                }
+                if (qtyVal <= 0 || qtyVal > 100) { qtyVal = 1; } // 비정상적인 수량이면 1로 보정
+                qty = String.valueOf(qtyVal);
+                price = String.valueOf(qtyVal == 0 ? amountVal : amountVal / qtyVal);
             } else {
                 price = numericTail.get(0);
                 qty = "1";
