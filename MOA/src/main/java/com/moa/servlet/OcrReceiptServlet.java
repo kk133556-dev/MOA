@@ -141,7 +141,9 @@ public class OcrReceiptServlet extends HttpServlet {
 
     private String callGoogleVision(String base64Image) throws IOException, InterruptedException {
         JSONObject imageObj = new JSONObject().put("content", base64Image);
-        JSONObject feature = new JSONObject().put("type", "TEXT_DETECTION");
+        // DOCUMENT_TEXT_DETECTION을 쓰면 글자 하나하나(symbol) 단위로 좌표랑 "여기서 띄어썼다"는
+        // 정보(detectedBreak)까지 받을 수 있어요. 이게 TEXT_DETECTION의 "단어" 단위보다 훨씬 정교해요.
+        JSONObject feature = new JSONObject().put("type", "DOCUMENT_TEXT_DETECTION");
         JSONObject request = new JSONObject()
                 .put("image", imageObj)
                 .put("features", new JSONArray().put(feature));
@@ -157,8 +159,6 @@ public class OcrReceiptServlet extends HttpServlet {
 
         JSONObject json = new JSONObject(httpResp.body());
 
-        // Vision API가 에러를 반환한 경우(키가 잘못됐거나, Vision API가 활성화 안 됐거나 등)
-        // 조용히 넘어가지 않고 이유를 그대로 예외로 던져서 화면에 보이게 해요.
         if (json.has("error")) {
             JSONObject err = json.getJSONObject("error");
             throw new IOException("Google Vision 오류: " + err.optString("message", "알 수 없는 오류"));
@@ -173,17 +173,16 @@ public class OcrReceiptServlet extends HttpServlet {
             throw new IOException("Google Vision 오류: " + err.optString("message", "알 수 없는 오류"));
         }
 
-        // Vision의 자체 문단(줄바꿈) 판단은 세로로 긴 영수증에서 "품명 열 -> 수량 열 -> 금액 열" 순으로
-        // 따로따로 읽어버리는 경우가 많아서 못 믿어요. 대신 단어별 좌표(textAnnotations)를 받아서
-        // 실제 화면상 "같은 높이에 있는 단어들"끼리 직접 한 줄로 다시 묶어요.
-        JSONArray wordAnnotations = first.optJSONArray("textAnnotations");
-        if (wordAnnotations != null && wordAnnotations.length() > 1) {
-            return rebuildLinesFromWords(wordAnnotations);
+        JSONObject fullTextAnnotation = first.optJSONObject("fullTextAnnotation");
+        if (fullTextAnnotation == null) return "";
+
+        List<WordBox> tokens = extractTokensFromSymbols(fullTextAnnotation);
+        if (!tokens.isEmpty()) {
+            return rebuildLinesFromTokens(tokens);
         }
 
-        // 좌표 정보가 없으면(드묾) 그냥 Vision이 준 원문 텍스트라도 사용해요.
-        JSONObject fullText = first.optJSONObject("fullTextAnnotation");
-        return fullText != null ? fullText.optString("text", "") : "";
+        // 심볼 단위 추출이 실패하면(드묾) 그냥 Vision이 준 원문 텍스트라도 사용해요.
+        return fullTextAnnotation.optString("text", "");
     }
 
     private static class WordBox {
@@ -193,36 +192,105 @@ public class OcrReceiptServlet extends HttpServlet {
         double height;
     }
 
-    // textAnnotations[0]은 전체 텍스트 뭉치라서 건너뛰고, [1]부터가 단어 하나하나의 좌표예요.
-    // y좌표(세로 위치)가 비슷한 단어들끼리 한 줄로 묶은 다음, 그 줄 안에서는 x좌표(가로 위치) 순으로 정렬해요.
-    private String rebuildLinesFromWords(JSONArray wordAnnotations) {
-        List<WordBox> words = new ArrayList<>();
-        for (int i = 1; i < wordAnnotations.length(); i++) {
-            JSONObject w = wordAnnotations.getJSONObject(i);
-            String text = w.optString("description", "");
-            if (text.isEmpty()) continue;
-            JSONObject boundingPoly = w.optJSONObject("boundingPoly");
-            if (boundingPoly == null) continue;
-            JSONArray vertices = boundingPoly.optJSONArray("vertices");
-            if (vertices == null || vertices.length() == 0) continue;
+    // pages -> blocks -> paragraphs -> words -> symbols 순으로 내려가면서 글자를 하나씩 읽어요.
+    // 각 글자(symbol)마다 "이 글자 다음에 띄어쓰기/줄바꿈이 있었는지"(detectedBreak) 정보가 있는데,
+    // 이걸 기준으로 "진짜 단어 경계"를 다시 판단해요. Vision의 자체 단어 판단보다 이게 더 정확해요.
+    private List<WordBox> extractTokensFromSymbols(JSONObject fullTextAnnotation) {
+        List<WordBox> tokens = new ArrayList<>();
+        JSONArray pages = fullTextAnnotation.optJSONArray("pages");
+        if (pages == null) return tokens;
 
-            double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
-            for (int v = 0; v < vertices.length(); v++) {
-                JSONObject pt = vertices.getJSONObject(v);
-                double x = pt.optDouble("x", 0);
-                double y = pt.optDouble("y", 0);
-                if (x < minX) minX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
+        StringBuilder curText = new StringBuilder();
+        double curMinX = Double.MAX_VALUE, curMinY = Double.MAX_VALUE, curMaxY = -Double.MAX_VALUE;
+        boolean hasCur = false;
+
+        for (int p = 0; p < pages.length(); p++) {
+            JSONArray blocks = pages.getJSONObject(p).optJSONArray("blocks");
+            if (blocks == null) continue;
+            for (int b = 0; b < blocks.length(); b++) {
+                JSONArray paragraphs = blocks.getJSONObject(b).optJSONArray("paragraphs");
+                if (paragraphs == null) continue;
+                for (int pa = 0; pa < paragraphs.length(); pa++) {
+                    JSONArray words = paragraphs.getJSONObject(pa).optJSONArray("words");
+                    if (words == null) continue;
+                    for (int w = 0; w < words.length(); w++) {
+                        JSONArray symbols = words.getJSONObject(w).optJSONArray("symbols");
+                        if (symbols == null) continue;
+                        for (int s = 0; s < symbols.length(); s++) {
+                            JSONObject sym = symbols.getJSONObject(s);
+                            String ch = sym.optString("text", "");
+                            JSONObject boundingBox = sym.optJSONObject("boundingBox");
+                            double[] box = boxMinMaxY(boundingBox);
+
+                            curText.append(ch);
+                            if (box != null) {
+                                curMinX = Math.min(curMinX, box[0]);
+                                curMinY = Math.min(curMinY, box[1]);
+                                curMaxY = Math.max(curMaxY, box[2]);
+                                hasCur = true;
+                            }
+
+                            String breakType = "";
+                            JSONObject property = sym.optJSONObject("property");
+                            if (property != null) {
+                                JSONObject detectedBreak = property.optJSONObject("detectedBreak");
+                                if (detectedBreak != null) {
+                                    breakType = detectedBreak.optString("type", "");
+                                }
+                            }
+                            boolean isBreak = breakType.equals("SPACE") || breakType.equals("SURE_SPACE")
+                                    || breakType.equals("EOL_SURE_SPACE") || breakType.equals("LINE_BREAK")
+                                    || breakType.equals("HYPHEN");
+
+                            if (isBreak && hasCur) {
+                                WordBox tb = new WordBox();
+                                tb.text = curText.toString();
+                                tb.xLeft = curMinX;
+                                tb.yCenter = (curMinY + curMaxY) / 2.0;
+                                tb.height = Math.max(1, curMaxY - curMinY);
+                                tokens.add(tb);
+                                curText.setLength(0);
+                                curMinX = Double.MAX_VALUE; curMinY = Double.MAX_VALUE; curMaxY = -Double.MAX_VALUE;
+                                hasCur = false;
+                            }
+                        }
+                    }
+                    // 단어 하나가 끝났는데 위에서 break 표시가 안 됐으면, 그래도 단어 경계로 봐요.
+                    if (hasCur) {
+                        WordBox tb = new WordBox();
+                        tb.text = curText.toString();
+                        tb.xLeft = curMinX;
+                        tb.yCenter = (curMinY + curMaxY) / 2.0;
+                        tb.height = Math.max(1, curMaxY - curMinY);
+                        tokens.add(tb);
+                        curText.setLength(0);
+                        curMinX = Double.MAX_VALUE; curMinY = Double.MAX_VALUE; curMaxY = -Double.MAX_VALUE;
+                        hasCur = false;
+                    }
+                }
             }
-            WordBox box = new WordBox();
-            box.text = text;
-            box.xLeft = minX;
-            box.yCenter = (minY + maxY) / 2.0;
-            box.height = Math.max(1, maxY - minY);
-            words.add(box);
         }
+        return tokens;
+    }
 
+    private double[] boxMinMaxY(JSONObject boundingBox) {
+        if (boundingBox == null) return null;
+        JSONArray vertices = boundingBox.optJSONArray("vertices");
+        if (vertices == null || vertices.length() == 0) return null;
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        for (int v = 0; v < vertices.length(); v++) {
+            JSONObject pt = vertices.getJSONObject(v);
+            double x = pt.optDouble("x", 0);
+            double y = pt.optDouble("y", 0);
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+        return new double[]{ minX, minY, maxY };
+    }
+
+    // y좌표(세로 위치)가 비슷한 토큰들끼리 한 줄로 묶은 다음, 그 줄 안에서는 x좌표(가로 위치) 순으로 정렬해요.
+    private String rebuildLinesFromTokens(List<WordBox> words) {
         words.sort((a, b) -> Double.compare(a.yCenter, b.yCenter));
 
         List<List<WordBox>> lines = new ArrayList<>();

@@ -16,6 +16,7 @@
     String currentMenu = "stats";
 
     SalesDAO dao = new SalesDAO();
+    List<Object[]> daily = dao.dailyByStore(storeId, 30);
     List<Object[]> monthly = dao.monthlyByStore(storeId, 12);
     List<Object[]> yearly = dao.yearlyByStore(storeId);
 
@@ -61,11 +62,12 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0">매출 추이</h6>
                 <div class="d-flex" style="background:#f0f0f0; border-radius:8px; padding:4px;">
+                    <div class="role-tab-stats" id="tabDaily" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; color:#374151;">일별</div>
                     <div class="role-tab-stats active" id="tabMonthly" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; background:var(--navy); color:#fff;">월별</div>
                     <div class="role-tab-stats" id="tabYearly" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; color:#374151;">연도별</div>
                 </div>
             </div>
-            <% if (monthly.isEmpty() && yearly.isEmpty()) { %>
+            <% if (daily.isEmpty() && monthly.isEmpty() && yearly.isEmpty()) { %>
                 <div class="text-center text-muted py-5" style="padding-top:120px;">
                     <i class="bi bi-bar-chart" style="font-size:40px; opacity:0.3;"></i>
                     <p class="mt-2">아직 매출 데이터가 없어요. 매출을 등록하면 여기에 그래프가 나와요.</p>
@@ -75,6 +77,26 @@
                     <canvas id="statsChart"></canvas>
                 </div>
             <% } %>
+        </div>
+
+        <div class="moa-card mb-4">
+            <h6 class="mb-3">일별 상세 내역 <span style="font-weight:400; font-size:12px; color:var(--text-muted);">(최근 30일)</span></h6>
+            <table class="table moa-table">
+                <thead><tr><th>날짜</th><th>총 매출</th><th>카드</th><th>현금</th></tr></thead>
+                <tbody>
+                <% if (daily.isEmpty()) { %>
+                    <tr><td colspan="4" class="text-center text-muted">데이터가 없어요</td></tr>
+                <% } else { for (int i = daily.size()-1; i >= 0; i--) { Object[] row = daily.get(i); %>
+                    <tr>
+                        <td><%= row[0] %></td>
+                        <td>₩ <%= String.format("%,d", (Integer) row[1]) %></td>
+                        <td>₩ <%= String.format("%,d", (Integer) row[2]) %></td>
+                        <td>₩ <%= String.format("%,d", (Integer) row[3]) %></td>
+                    </tr>
+                <% } } %>
+                </tbody>
+            </table>
+            <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:0;">개별 기록 삭제는 <a href="mypage.jsp">마이페이지</a>에서 할 수 있어요.</p>
         </div>
 
         <div class="moa-card">
@@ -115,15 +137,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
+    var dailyLabels = [<% for (int i=0;i<daily.size();i++){ %>'<%= daily.get(i)[0] %>'<%= i<daily.size()-1?",":"" %><% } %>];
+    var dailyValues = [<% for (int i=0;i<daily.size();i++){ %><%= daily.get(i)[1] %><%= i<daily.size()-1?",":"" %><% } %>];
     var monthlyLabels = [<% for (int i=0;i<monthly.size();i++){ %>'<%= monthly.get(i)[0] %>'<%= i<monthly.size()-1?",":"" %><% } %>];
     var monthlyValues = [<% for (int i=0;i<monthly.size();i++){ %><%= monthly.get(i)[1] %><%= i<monthly.size()-1?",":"" %><% } %>];
     var yearlyLabels = [<% for (int i=0;i<yearly.size();i++){ %>'<%= yearly.get(i)[0] %>'<%= i<yearly.size()-1?",":"" %><% } %>];
     var yearlyValues = [<% for (int i=0;i<yearly.size();i++){ %><%= yearly.get(i)[1] %><%= i<yearly.size()-1?",":"" %><% } %>];
 
+    var tabDaily = document.getElementById('tabDaily');
     var tabMonthly = document.getElementById('tabMonthly');
     var tabYearly = document.getElementById('tabYearly');
     function activate(tab) {
-        [tabMonthly, tabYearly].forEach(function (t) {
+        [tabDaily, tabMonthly, tabYearly].forEach(function (t) {
             t.classList.remove('active');
             t.style.background = 'transparent'; t.style.color = '#374151';
         });
@@ -134,13 +159,15 @@
     var ctx = document.getElementById('statsChart');
     var chart = null;
     if (ctx) {
-        // 월별 데이터가 비어있으면 연도별을 기본으로 보여줘요. (둘 다 있으면 월별이 기본)
-        var startWithYearly = (monthlyValues.length === 0 && yearlyValues.length > 0);
+        // 월별 데이터가 있으면 월별을 기본으로, 없으면 연도별, 그것도 없으면 일별을 보여줘요.
+        var defaultTab = monthlyValues.length > 0 ? 'monthly' : (yearlyValues.length > 0 ? 'yearly' : 'daily');
+        var defaultLabels = defaultTab === 'monthly' ? monthlyLabels : (defaultTab === 'yearly' ? yearlyLabels : dailyLabels);
+        var defaultValues = defaultTab === 'monthly' ? monthlyValues : (defaultTab === 'yearly' ? yearlyValues : dailyValues);
         chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: startWithYearly ? yearlyLabels : monthlyLabels,
-                datasets: [{ label: '매출', data: startWithYearly ? yearlyValues : monthlyValues, backgroundColor: 'rgba(79,70,229,0.75)', borderRadius: 6, maxBarThickness: 46 }]
+                labels: defaultLabels,
+                datasets: [{ label: '매출', data: defaultValues, backgroundColor: 'rgba(79,70,229,0.75)', borderRadius: 6, maxBarThickness: 46 }]
             },
             options: {
                 maintainAspectRatio: false,
@@ -148,9 +175,15 @@
                 scales: { y: { beginAtZero: true, ticks: { callback: function(v){ return '₩' + v.toLocaleString(); } } } }
             }
         });
-        if (startWithYearly) activate(tabYearly); else activate(tabMonthly);
+        if (defaultTab === 'monthly') activate(tabMonthly);
+        else if (defaultTab === 'yearly') activate(tabYearly);
+        else activate(tabDaily);
     }
 
+    if (tabDaily) tabDaily.addEventListener('click', function () {
+        activate(tabDaily);
+        chart.data.labels = dailyLabels; chart.data.datasets[0].data = dailyValues; chart.update();
+    });
     if (tabMonthly) tabMonthly.addEventListener('click', function () {
         activate(tabMonthly);
         chart.data.labels = monthlyLabels; chart.data.datasets[0].data = monthlyValues; chart.update();

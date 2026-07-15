@@ -163,6 +163,42 @@ public class SalesDAO {
         }
     }
 
+    // 일별 매출 집계 (최근 N일). 결과: [ 날짜, 총액, 카드, 현금, 주류, 수수료, 기타지출 ]
+    public List<Object[]> dailyByStore(int storeId, int days) throws SQLException {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT sales_date, SUM(total_amount) AS total, SUM(card_amount) AS card, SUM(cash_amount) AS cash, " +
+                     "SUM(liquor_amount) AS liquor, SUM(fee_amount) AS fee, SUM(other_expense) AS other " +
+                     "FROM sales_records WHERE store_id = ? " +
+                     "AND sales_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                     "GROUP BY sales_date ORDER BY sales_date ASC";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            ps.setInt(2, days);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Object[]{ rs.getDate("sales_date").toString(), rs.getInt("total"), rs.getInt("card"), rs.getInt("cash"),
+                            rs.getInt("liquor"), rs.getInt("fee"), rs.getInt("other") });
+                }
+            }
+            return list;
+        } catch (SQLSyntaxErrorException e) {
+            List<Object[]> fallback = new ArrayList<>();
+            String fsql = "SELECT sales_date, SUM(total_amount) AS total, SUM(card_amount) AS card, SUM(cash_amount) AS cash " +
+                          "FROM sales_records WHERE store_id = ? AND sales_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                          "GROUP BY sales_date ORDER BY sales_date ASC";
+            try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(fsql)) {
+                ps.setInt(1, storeId);
+                ps.setInt(2, days);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        fallback.add(new Object[]{ rs.getDate("sales_date").toString(), rs.getInt("total"), rs.getInt("card"), rs.getInt("cash"), 0, 0, 0 });
+                    }
+                }
+            }
+            return fallback;
+        }
+    }
+
     // 전월 대비 이번달 증감률 계산용
     public int sumByMonth(int storeId, String yearMonth) throws SQLException {
         String sql = "SELECT COALESCE(SUM(total_amount),0) FROM sales_records " +

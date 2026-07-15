@@ -8,12 +8,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="css/style.css" rel="stylesheet">
     <style>
-        .excel-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-        .excel-table th, .excel-table td { border: 1px solid #d1d5db; padding: 8px 10px; }
-        .excel-table th { background: #F3F4F6; font-weight: 700; }
-        .excel-table td[contenteditable] { background: #FFFBEB; }
-        .excel-table tfoot td { font-weight: 800; background: #EEF2FF; }
-        .excel-table tfoot td[contenteditable] { background: #FEF9C3; font-weight: 600; }
+        .excel-table { border-collapse: collapse; width: 100%; font-size: 13px; background: #fff; }
+        .excel-table th, .excel-table td { border: 1px solid var(--border); padding: 9px 12px; }
+        .excel-table th { background: #F9FAFB; font-weight: 700; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+        .excel-table td[contenteditable] { cursor: text; transition: background 0.15s ease; }
+        .excel-table td[contenteditable]:hover { background: #F9FAFB; }
+        .excel-table td[contenteditable]:focus { background: #EEF2FF; outline: 1.5px solid var(--primary); outline-offset: -1.5px; }
+        .excel-table tfoot td { font-weight: 700; background: #FAFAFC; }
+        .excel-table tfoot td[contenteditable]:hover { background: #F3F4F6; }
+        .excel-table tfoot td[contenteditable]:focus { background: #EEF2FF; }
     </style>
 </head>
 <body>
