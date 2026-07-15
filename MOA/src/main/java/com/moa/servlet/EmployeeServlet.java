@@ -28,7 +28,8 @@ public class EmployeeServlet extends HttpServlet {
                 dao.deleteOwnedByStore(employeeId, storeId);
             } else {
                 dao.insert(storeId, req.getParameter("name"), req.getParameter("role"),
-                        req.getParameter("phone"), req.getParameter("memo"));
+                        req.getParameter("phone"), req.getParameter("address"), req.getParameter("memo"),
+                        req.getParameter("guardianName"), req.getParameter("guardianPhone"));
             }
             resp.sendRedirect("staff.jsp");
         } catch (SQLException e) {

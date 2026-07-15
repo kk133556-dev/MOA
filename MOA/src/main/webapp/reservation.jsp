@@ -64,12 +64,6 @@
                             <div class="col-6"><label class="form-label" style="font-size:12px;">예약 날짜</label><input type="date" name="date" id="resDate" class="form-control" required></div>
                             <div class="col-6"><label class="form-label" style="font-size:12px;">예약 시간</label><input type="time" name="time" id="resTime" class="form-control" required></div>
                         </div>
-                        <div class="d-flex flex-wrap gap-1 mb-2" id="timeSlotChips">
-                            <% String[] slots = {"11:00","11:30","12:00","12:30","13:00","17:00","17:30","18:00","18:30","19:00","19:30","20:00","20:30"};
-                               for (String slot : slots) { %>
-                                <span class="time-chip" data-time="<%= slot %>"><%= slot %></span>
-                            <% } %>
-                        </div>
                         <div class="mb-2"><label class="form-label" style="font-size:12px;">주문 메뉴</label><input type="text" name="menuOrder" class="form-control" placeholder="예: A세트 10인분"></div>
                         <div class="mb-2"><label class="form-label" style="font-size:12px;">선결제 금액</label><input type="number" name="prepayment" class="form-control" placeholder="0" value="0"></div>
                         <div class="mb-3"><label class="form-label" style="font-size:12px;">메모</label><input type="text" name="memo" class="form-control" placeholder="선택"></div>
@@ -128,21 +122,7 @@
         </div>
     </main>
 </div>
-<script>
-    var resTime = document.getElementById('resTime');
-    document.querySelectorAll('.time-chip').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            resTime.value = chip.dataset.time;
-            document.querySelectorAll('.time-chip').forEach(function (c) { c.classList.remove('active'); });
-            chip.classList.add('active');
-        });
-    });
-    resTime.addEventListener('change', function () {
-        document.querySelectorAll('.time-chip').forEach(function (c) {
-            c.classList.toggle('active', c.dataset.time === resTime.value);
-        });
-    });
-</script>
+
 <jsp:include page="chat_widget.jsp" />
 </body>
 </html>

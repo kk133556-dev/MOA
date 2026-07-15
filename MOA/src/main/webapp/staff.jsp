@@ -72,6 +72,9 @@
                             </select>
                         </div>
                         <div class="mb-2"><label class="form-label" style="font-size:12px;">연락처</label><input type="text" name="phone" class="form-control" placeholder="010-0000-0000"></div>
+                        <div class="mb-2"><label class="form-label" style="font-size:12px;">집주소</label><input type="text" name="address" class="form-control" placeholder="선택"></div>
+                        <div class="mb-2"><label class="form-label" style="font-size:12px;">보호자 성함</label><input type="text" name="guardianName" class="form-control" placeholder="선택"></div>
+                        <div class="mb-2"><label class="form-label" style="font-size:12px;">보호자 전화번호</label><input type="text" name="guardianPhone" class="form-control" placeholder="010-0000-0000"></div>
                         <div class="mb-3"><label class="form-label" style="font-size:12px;">메모</label><input type="text" name="memo" class="form-control" placeholder="선택"></div>
                         <button type="submit" class="btn-moa w-100 justify-content-center">추가</button>
                     </form>
@@ -81,16 +84,17 @@
                     <% if (employees.isEmpty()) { %>
                         <p class="text-muted text-center py-3 mb-0" style="font-size:13px;">등록된 직원이 없어요</p>
                     <% } else { for (Employee e : employees) { %>
-                        <div class="d-flex justify-content-between align-items-center" style="padding:9px 2px; border-bottom:1px solid var(--border);">
+                        <div class="d-flex justify-content-between align-items-center emp-row" data-emp-id="<%= e.getEmployeeId() %>" style="padding:9px 2px; border-bottom:1px solid var(--border); cursor:pointer;">
                             <div>
                                 <b style="font-size:13px;"><%= e.getName() %></b>
                                 <span class="role-chip role-<%= e.getRole() %>"><%= e.getRole() %></span>
                                 <% if (e.getPhone() != null && !e.getPhone().isEmpty()) { %><div style="font-size:11px; color:var(--text-muted);"><%= e.getPhone() %></div><% } %>
+                                <% if (e.getMemo() != null && !e.getMemo().isEmpty()) { %><div style="font-size:11px; color:var(--text-muted);"><i class="bi bi-sticky"></i> <%= e.getMemo() %></div><% } %>
                             </div>
-                            <form action="EmployeeServlet" method="post" onsubmit="return confirm('<%= e.getName() %> 직원을 삭제할까요? 근무 일정도 같이 지워져요.');">
+                            <form action="EmployeeServlet" method="post" onsubmit="event.stopPropagation(); return confirm('<%= e.getName() %> 직원을 삭제할까요? 근무 일정도 같이 지워져요.');">
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="employeeId" value="<%= e.getEmployeeId() %>">
-                                <button type="submit" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;"><i class="bi bi-trash"></i></button>
+                                <button type="submit" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;" onclick="event.stopPropagation();"><i class="bi bi-trash"></i></button>
                             </form>
                         </div>
                     <% } } %>
@@ -145,6 +149,26 @@
     </main>
 </div>
 
+<!-- 직원 상세 정보 모달 -->
+<div class="modal fade" id="empDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="empDetailName"><i class="bi bi-person-badge"></i></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="font-size:13px;">
+                <div class="mb-2"><span class="text-muted">직책</span><div id="empDetailRole"></div></div>
+                <div class="mb-2"><span class="text-muted">연락처</span><div id="empDetailPhone">-</div></div>
+                <div class="mb-2"><span class="text-muted">집주소</span><div id="empDetailAddress">-</div></div>
+                <div class="mb-2"><span class="text-muted">보호자 성함</span><div id="empDetailGuardianName">-</div></div>
+                <div class="mb-2"><span class="text-muted">보호자 전화번호</span><div id="empDetailGuardianPhone">-</div></div>
+                <div class="mb-0"><span class="text-muted">메모</span><div id="empDetailMemo">-</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 날짜 클릭 시 뜨는 근무 배정 모달 -->
 <div class="modal fade" id="dayModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -176,6 +200,35 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    var employeeData = {};
+    <% for (Employee e : employees) { %>
+        employeeData[<%= e.getEmployeeId() %>] = {
+            name: '<%= e.getName().replace("'", "\\'") %>',
+            role: '<%= e.getRole() %>',
+            phone: '<%= e.getPhone() != null ? e.getPhone().replace("'", "\\'") : "" %>',
+            address: '<%= e.getAddress() != null ? e.getAddress().replace("'", "\\'") : "" %>',
+            memo: '<%= e.getMemo() != null ? e.getMemo().replace("'", "\\'") : "" %>',
+            guardianName: '<%= e.getGuardianName() != null ? e.getGuardianName().replace("'", "\\'") : "" %>',
+            guardianPhone: '<%= e.getGuardianPhone() != null ? e.getGuardianPhone().replace("'", "\\'") : "" %>'
+        };
+    <% } %>
+
+    var empDetailModal = new bootstrap.Modal(document.getElementById('empDetailModal'));
+    document.querySelectorAll('.emp-row').forEach(function (row) {
+        row.addEventListener('click', function () {
+            var emp = employeeData[row.dataset.empId];
+            if (!emp) return;
+            document.getElementById('empDetailName').innerHTML = '<i class="bi bi-person-badge"></i> ' + emp.name;
+            document.getElementById('empDetailRole').textContent = emp.role;
+            document.getElementById('empDetailPhone').textContent = emp.phone || '-';
+            document.getElementById('empDetailAddress').textContent = emp.address || '-';
+            document.getElementById('empDetailGuardianName').textContent = emp.guardianName || '-';
+            document.getElementById('empDetailGuardianPhone').textContent = emp.guardianPhone || '-';
+            document.getElementById('empDetailMemo').textContent = emp.memo || '-';
+            empDetailModal.show();
+        });
+    });
+
     var scheduleData = {}; // 날짜별 [{id, name, role, start, end}] - 서버에서 렌더된 값 기반으로 채워요.
     <%
         for (Map.Entry<String, List<WorkSchedule>> entry : byDate.entrySet()) {

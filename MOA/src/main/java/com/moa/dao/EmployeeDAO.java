@@ -21,14 +21,17 @@ public class EmployeeDAO {
         return list;
     }
 
-    public int insert(int storeId, String name, String role, String phone, String memo) throws SQLException {
-        String sql = "INSERT INTO employees (store_id, name, role, phone, memo) VALUES (?, ?, ?, ?, ?)";
+    public int insert(int storeId, String name, String role, String phone, String address, String memo, String guardianName, String guardianPhone) throws SQLException {
+        String sql = "INSERT INTO employees (store_id, name, role, phone, address, memo, guardian_name, guardian_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, storeId);
             ps.setString(2, name);
             ps.setString(3, role);
             ps.setString(4, phone);
-            ps.setString(5, memo);
+            ps.setString(5, address);
+            ps.setString(6, memo);
+            ps.setString(7, guardianName);
+            ps.setString(8, guardianPhone);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) return rs.getInt(1);
@@ -54,7 +57,10 @@ public class EmployeeDAO {
         e.setName(rs.getString("name"));
         e.setRole(rs.getString("role"));
         e.setPhone(rs.getString("phone"));
+        e.setAddress(rs.getString("address"));
         e.setMemo(rs.getString("memo"));
+        e.setGuardianName(rs.getString("guardian_name"));
+        e.setGuardianPhone(rs.getString("guardian_phone"));
         return e;
     }
 }
