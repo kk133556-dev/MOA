@@ -4,6 +4,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>매출 통계</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -43,7 +44,112 @@
 %>
 <div class="d-flex">
     <%@ include file="mypage_sidebar.jsp" %>
-    <main class="flex-grow-1 p-4">
+    <main class="flex-grow-1<%= isApp ? "" : " p-4" %>">
+    <% if (isApp) { %>
+        <!-- ===================== 앱 전용 통계 화면 ===================== -->
+        <div style="padding:18px 16px 24px; background:#F7F6FB; min-height:100vh;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div style="font-size:19px; font-weight:800; color:#1E1B2E;"><i class="bi bi-bar-chart"></i> 매출 통계</div>
+                <div class="d-flex gap-1">
+                    <a href="ExportCsvServlet" style="width:34px; height:34px; border-radius:10px; background:#fff; display:flex; align-items:center; justify-content:center; color:#1E1B2E; text-decoration:none;"><i class="bi bi-file-earmark-spreadsheet"></i></a>
+                    <a href="report_print.jsp" style="width:34px; height:34px; border-radius:10px; background:#fff; display:flex; align-items:center; justify-content:center; color:#1E1B2E; text-decoration:none;"><i class="bi bi-file-earmark-pdf"></i></a>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">누적 매출</div>
+                    <div style="font-size:15px; font-weight:800; color:#1E1B2E;">₩<%= String.format("%,d", grandTotal) %></div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">이번 달 (<%= thisMonth %>)</div>
+                    <div style="font-size:15px; font-weight:800; color:#1E1B2E;">₩<%= String.format("%,d", thisMonthTotal) %></div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">지난 달 (<%= lastMonth %>)</div>
+                    <div style="font-size:15px; font-weight:800; color:#1E1B2E;">₩<%= String.format("%,d", lastMonthTotal) %></div>
+                </div>
+                <div style="background:#1E1B2E; border-radius:14px; padding:14px;">
+                    <div id="compareDailyApp" style="display:none;">
+                        <% if (yesterdayTotal == 0) { %>
+                            <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전일 대비</div>
+                            <div style="font-size:13px; font-weight:700; color:#9CA3AF;">데이터 없음</div>
+                        <% } else { %>
+                            <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전일 대비</div>
+                            <div style="font-size:15px; font-weight:800; color:<%= dailyChangeRate > 0 ? "#4ADE80" : (dailyChangeRate < 0 ? "#F87171" : "#9CA3AF") %>;">
+                                <i class="bi bi-<%= dailyChangeRate > 0 ? "arrow-up-right" : (dailyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i> <%= String.format("%.1f", Math.abs(dailyChangeRate)) %>%
+                            </div>
+                        <% } %>
+                    </div>
+                    <div id="compareMonthlyApp" style="display:none;">
+                        <% if (lastMonthTotal == 0) { %>
+                            <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전월 대비</div>
+                            <div style="font-size:13px; font-weight:700; color:#9CA3AF;">데이터 없음</div>
+                        <% } else { %>
+                            <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전월 대비</div>
+                            <div style="font-size:15px; font-weight:800; color:<%= changeRate > 0 ? "#4ADE80" : (changeRate < 0 ? "#F87171" : "#9CA3AF") %>;">
+                                <i class="bi bi-<%= changeRate > 0 ? "arrow-up-right" : (changeRate < 0 ? "arrow-down-right" : "dash") %>"></i> <%= String.format("%.1f", Math.abs(changeRate)) %>%
+                            </div>
+                        <% } %>
+                    </div>
+                    <div id="compareYearlyApp" style="display:none;">
+                        <% if (lastYearTotal == 0) { %>
+                            <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전년 대비</div>
+                            <div style="font-size:13px; font-weight:700; color:#9CA3AF;">데이터 없음</div>
+                        <% } else { %>
+                            <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전년 대비</div>
+                            <div style="font-size:15px; font-weight:800; color:<%= yearlyChangeRate > 0 ? "#4ADE80" : (yearlyChangeRate < 0 ? "#F87171" : "#9CA3AF") %>;">
+                                <i class="bi bi-<%= yearlyChangeRate > 0 ? "arrow-up-right" : (yearlyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i> <%= String.format("%.1f", Math.abs(yearlyChangeRate)) %>%
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#fff; border-radius:16px; padding:16px; margin-bottom:16px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div style="font-size:13px; font-weight:700; color:#1E1B2E;">매출 추이</div>
+                    <div class="d-flex" style="background:#F7F6FB; border-radius:8px; padding:3px;">
+                        <div class="role-tab-stats" id="tabDaily" style="padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; color:#374151;">일별</div>
+                        <div class="role-tab-stats active" id="tabMonthly" style="padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; background:var(--navy); color:#fff;">월별</div>
+                        <div class="role-tab-stats" id="tabYearly" style="padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; color:#374151;">연도별</div>
+                    </div>
+                </div>
+                <% if (daily.isEmpty() && monthly.isEmpty() && yearly.isEmpty()) { %>
+                    <div class="text-center" style="padding:40px 0; color:#8b87a3;">
+                        <i class="bi bi-bar-chart" style="font-size:32px; opacity:0.3;"></i>
+                        <p class="mt-2" style="font-size:12.5px;">아직 매출 데이터가 없어요</p>
+                    </div>
+                <% } else { %>
+                    <div style="position:relative; height:220px;">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                <% } %>
+            </div>
+
+            <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:#1E1B2E;">일별 상세 내역 <span style="font-weight:400; font-size:11px; color:#8b87a3;">(최근 30일)</span></div>
+            <% if (daily.isEmpty()) { %>
+                <div style="text-align:center; padding:20px 0; color:#8b87a3; font-size:12.5px; margin-bottom:16px;">데이터가 없어요</div>
+            <% } else { for (int i = daily.size()-1; i >= 0; i--) { Object[] row = daily.get(i); %>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:8px;">
+                    <div style="font-size:12.5px; color:#8b87a3;"><%= row[0] %></div>
+                    <div style="font-size:14px; font-weight:700; color:#1E1B2E;">₩<%= String.format("%,d", (Integer) row[1]) %></div>
+                </div>
+            <% } } %>
+
+            <div style="font-size:13px; font-weight:700; margin:16px 0 10px; color:#1E1B2E;">월별 상세 내역</div>
+            <% if (monthly.isEmpty()) { %>
+                <div style="text-align:center; padding:20px 0; color:#8b87a3; font-size:12.5px;">데이터가 없어요</div>
+            <% } else { for (int i = monthly.size()-1; i >= 0; i--) { Object[] row = monthly.get(i); %>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:8px;">
+                    <div style="font-size:12.5px; color:#8b87a3;"><%= row[0] %></div>
+                    <div style="font-size:14px; font-weight:700; color:#1E1B2E;">₩<%= String.format("%,d", (Integer) row[1]) %></div>
+                </div>
+            <% } } %>
+        </div>
+    <% } else { %>
+        <!-- ===================== 기존 PC/웹 통계 화면 ===================== -->
+        <div class="p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0"><i class="bi bi-bar-chart"></i> 매출 통계</h4>
             <div class="d-flex gap-2">
@@ -58,7 +164,6 @@
             <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-value">₩ <%= String.format("%,d", lastMonthTotal) %></div><div class="kpi-label">지난 달 매출 (<%= lastMonth %>)</div></div></div>
             <div class="col-md-3 col-6">
                 <div class="kpi-card">
-                    <!-- 일별 탭 선택 시: 전일 대비 -->
                     <div id="compareDaily" style="display:none;">
                         <% if (yesterdayTotal == 0) { %>
                             <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
@@ -76,7 +181,6 @@
                             </div>
                         <% } %>
                     </div>
-                    <!-- 월별 탭 선택 시: 전월 대비 -->
                     <div id="compareMonthly" style="display:none;">
                         <% if (lastMonthTotal == 0) { %>
                             <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
@@ -94,7 +198,6 @@
                             </div>
                         <% } %>
                     </div>
-                    <!-- 연도별 탭 선택 시: 전년 대비 -->
                     <div id="compareYearly" style="display:none;">
                         <% if (lastYearTotal == 0) { %>
                             <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
@@ -120,9 +223,9 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0">매출 추이</h6>
                 <div class="d-flex" style="background:#f0f0f0; border-radius:8px; padding:4px;">
-                    <div class="role-tab-stats" id="tabDaily" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; color:#374151;">일별</div>
-                    <div class="role-tab-stats active" id="tabMonthly" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; background:var(--navy); color:#fff;">월별</div>
-                    <div class="role-tab-stats" id="tabYearly" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; color:#374151;">연도별</div>
+                    <div class="role-tab-stats" id="tabDailyWeb" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; color:#374151;">일별</div>
+                    <div class="role-tab-stats active" id="tabMonthlyWeb" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; background:var(--navy); color:#fff;">월별</div>
+                    <div class="role-tab-stats" id="tabYearlyWeb" style="padding:6px 16px; border-radius:6px; cursor:pointer; font-size:13px; color:#374151;">연도별</div>
                 </div>
             </div>
             <% if (daily.isEmpty() && monthly.isEmpty() && yearly.isEmpty()) { %>
@@ -132,7 +235,7 @@
                 </div>
             <% } else { %>
                 <div style="position:relative; height:340px;">
-                    <canvas id="statsChart"></canvas>
+                    <canvas id="statsChartWeb"></canvas>
                 </div>
             <% } %>
         </div>
@@ -190,6 +293,8 @@
                 </table>
             </form>
         </div>
+        </div>
+    <% } %>
     </main>
 </div>
 
@@ -202,12 +307,14 @@
     var yearlyLabels = [<% for (int i=0;i<yearly.size();i++){ %>'<%= yearly.get(i)[0] %>'<%= i<yearly.size()-1?",":"" %><% } %>];
     var yearlyValues = [<% for (int i=0;i<yearly.size();i++){ %><%= yearly.get(i)[1] %><%= i<yearly.size()-1?",":"" %><% } %>];
 
-    var tabDaily = document.getElementById('tabDaily');
-    var tabMonthly = document.getElementById('tabMonthly');
-    var tabYearly = document.getElementById('tabYearly');
-    var compareDaily = document.getElementById('compareDaily');
-    var compareMonthly = document.getElementById('compareMonthly');
-    var compareYearly = document.getElementById('compareYearly');
+    var isAppPage = <%= isApp %>;
+    var tabDaily = document.getElementById(isAppPage ? 'tabDaily' : 'tabDailyWeb');
+    var tabMonthly = document.getElementById(isAppPage ? 'tabMonthly' : 'tabMonthlyWeb');
+    var tabYearly = document.getElementById(isAppPage ? 'tabYearly' : 'tabYearlyWeb');
+    var compareDaily = document.getElementById(isAppPage ? 'compareDailyApp' : 'compareDaily');
+    var compareMonthly = document.getElementById(isAppPage ? 'compareMonthlyApp' : 'compareMonthly');
+    var compareYearly = document.getElementById(isAppPage ? 'compareYearlyApp' : 'compareYearly');
+
     function activate(tab) {
         [tabDaily, tabMonthly, tabYearly].forEach(function (t) {
             t.classList.remove('active');
@@ -216,16 +323,14 @@
         tab.classList.add('active');
         tab.style.background = 'var(--navy)'; tab.style.color = '#fff';
 
-        // 선택한 기간에 맞는 비교 카드(전일/전월/전년 대비)만 보여줘요.
         [compareDaily, compareMonthly, compareYearly].forEach(function (c) { if (c) c.style.display = 'none'; });
         var toShow = tab === tabDaily ? compareDaily : (tab === tabYearly ? compareYearly : compareMonthly);
         if (toShow) toShow.style.display = 'block';
     }
 
-    var ctx = document.getElementById('statsChart');
+    var ctx = document.getElementById(isAppPage ? 'statsChart' : 'statsChartWeb');
     var chart = null;
     if (ctx) {
-        // 월별 데이터가 있으면 월별을 기본으로, 없으면 연도별, 그것도 없으면 일별을 보여줘요.
         var defaultTab = monthlyValues.length > 0 ? 'monthly' : (yearlyValues.length > 0 ? 'yearly' : 'daily');
         var defaultLabels = defaultTab === 'monthly' ? monthlyLabels : (defaultTab === 'yearly' ? yearlyLabels : dailyLabels);
         var defaultValues = defaultTab === 'monthly' ? monthlyValues : (defaultTab === 'yearly' ? yearlyValues : dailyValues);
@@ -268,6 +373,7 @@
     var monthDeleteForm = document.getElementById('monthDeleteForm');
 
     function updateMonthBtn() {
+        if (!btnDeleteSelectedMonths) return;
         var anyChecked = Array.from(monthChecks).some(function (c) { return c.checked; });
         btnDeleteSelectedMonths.disabled = !anyChecked;
     }
