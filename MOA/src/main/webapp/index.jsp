@@ -4,6 +4,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>MOA - 소상공인 매출 관리 플랫폼</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -24,6 +25,32 @@
     if (isApp && loggedIn) {
         response.sendRedirect(isAdmin ? "admin_main.jsp" : "mypage.jsp");
         return;
+    }
+
+    // 앱이고 세션은 끊겼지만(30분 지남 등) "기억 토큰" 쿠키가 남아있으면, 로그인 화면 없이 자동으로 다시 로그인시켜줘요.
+    if (isApp && !loggedIn && request.getCookies() != null) {
+        for (jakarta.servlet.http.Cookie c : request.getCookies()) {
+            if ("moaRT".equals(c.getName())) {
+                com.moa.model.Member rememberedMember = new com.moa.dao.MemberDAO().findByRememberToken(c.getValue());
+                if (rememberedMember != null && !"SUSPENDED".equals(rememberedMember.getStatus()) && !"PENDING".equals(rememberedMember.getStatus())) {
+                    session.setAttribute("memberId", rememberedMember.getMemberId());
+                    session.setAttribute("name", rememberedMember.getName());
+                    session.setAttribute("memberType", rememberedMember.getMemberType());
+                    session.setAttribute("plan", rememberedMember.getPlan());
+                    boolean remAdmin = "ADMIN".equals(rememberedMember.getMemberType());
+                    if (!remAdmin) {
+                        com.moa.model.StoreProfile remStore = new com.moa.dao.StoreDAO().findByMemberId(rememberedMember.getMemberId());
+                        if (remStore != null) {
+                            session.setAttribute("storeId", remStore.getStoreId());
+                            session.setAttribute("storeName", remStore.getStoreName());
+                        }
+                    }
+                    response.sendRedirect(remAdmin ? "admin_main.jsp" : "mypage.jsp");
+                    return;
+                }
+                break;
+            }
+        }
     }
 %>
 

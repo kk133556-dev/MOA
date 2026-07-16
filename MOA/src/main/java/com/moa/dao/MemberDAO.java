@@ -22,6 +22,27 @@ public class MemberDAO {
         return null;
     }
 
+    // 앱 자동 로그인(로그인 유지)용 - 기억 토큰을 저장/조회해요.
+    public void setRememberToken(int memberId, String token) throws SQLException {
+        String sql = "UPDATE members SET remember_token = ? WHERE member_id = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, token);
+            ps.setInt(2, memberId);
+            ps.executeUpdate();
+        }
+    }
+
+    public Member findByRememberToken(String token) throws SQLException {
+        String sql = "SELECT * FROM members WHERE remember_token = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, token);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return map(rs);
+            }
+        }
+        return null;
+    }
+
     public boolean isLoginIdTaken(String loginId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM members WHERE login_id = ?";
         try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {

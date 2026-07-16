@@ -19,6 +19,20 @@ public class LogoutServlet extends HttpServlet {
         if (session != null) {
             session.invalidate();
         }
+
+        // 앱 자동로그인용 기억 쿠키도 같이 지워요. 로그아웃했는데 다시 자동으로 들어가지면 안 되니까요.
+        if (req.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie c : req.getCookies()) {
+                if ("moaRT".equals(c.getName())) {
+                    c.setValue("");
+                    c.setMaxAge(0);
+                    c.setPath("/");
+                    resp.addCookie(c);
+                    break;
+                }
+            }
+        }
+
         resp.sendRedirect("login.jsp");
     }
 }

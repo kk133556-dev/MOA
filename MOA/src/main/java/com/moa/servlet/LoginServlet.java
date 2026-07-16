@@ -60,6 +60,18 @@ public class LoginServlet extends HttpServlet {
                 }
             }
 
+            // 안드로이드 앱에서 로그인한 경우, 다음에 앱을 켰을 때 로그인 화면 없이 자동으로 들어오게
+            // 30일짜리 기억 토큰을 쿠키로 심어줘요.
+            String ua = req.getHeader("User-Agent");
+            if (ua != null && ua.contains("MOAApp")) {
+                String token = java.util.UUID.randomUUID().toString();
+                dao.setRememberToken(member.getMemberId(), token);
+                Cookie rememberCookie = new Cookie("moaRT", token);
+                rememberCookie.setMaxAge(60 * 60 * 24 * 30); // 30일
+                rememberCookie.setPath("/");
+                resp.addCookie(rememberCookie);
+            }
+
             resp.sendRedirect("index.jsp?welcome=1");
 
         } catch (SQLException e) {
