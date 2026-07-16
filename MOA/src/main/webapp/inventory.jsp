@@ -4,6 +4,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>재고 관리</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -25,7 +26,107 @@
 %>
 <div class="d-flex">
     <%@ include file="mypage_sidebar.jsp" %>
-    <main class="flex-grow-1 p-4">
+    <main class="flex-grow-1<%= isApp ? "" : " p-4" %>">
+    <% if (isApp) { %>
+        <!-- ===================== 앱 전용 재고관리 화면 ===================== -->
+        <div style="padding:18px 16px 24px; background:#F7F6FB; min-height:100vh;">
+            <div style="font-size:19px; font-weight:800; color:#1E1B2E; margin-bottom:16px;"><i class="bi bi-box-seam"></i> 재고 관리</div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">전체 품목</div>
+                    <div style="font-size:16px; font-weight:800; color:#1E1B2E;"><%= items.size() %>개</div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">안전 수량 미만</div>
+                    <div style="font-size:16px; font-weight:800; color:<%= lowCount>0 ? "#DC2626" : "#16A34A" %>;"><%= lowCount %>개</div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">정상 재고</div>
+                    <div style="font-size:16px; font-weight:800; color:#1E1B2E;"><%= items.size() - lowCount %>개</div>
+                </div>
+                <a href="order_form.jsp" style="background:#1E1B2E; border-radius:14px; padding:14px; text-decoration:none; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">발주서</div>
+                    <div style="font-size:14px; font-weight:800; color:#fff;"><i class="bi bi-file-earmark-text"></i> 작성하기</div>
+                </a>
+            </div>
+
+            <% if (lowCount > 0) { %>
+                <div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; color:#991B1B;">
+                    <i class="bi bi-exclamation-triangle"></i> <b><%= lowCount %>개</b> 품목이 안전 수량 미만이에요. <a href="order_form.jsp" style="color:#991B1B; font-weight:700;">발주서 작성 →</a>
+                </div>
+            <% } %>
+
+            <!-- 품목 추가 (바텀시트) -->
+            <button type="button" data-bs-toggle="offcanvas" data-bs-target="#invAddSheet" style="width:100%; background:#8B5CF6; color:#fff; border:none; border-radius:14px; padding:14px; font-weight:700; font-size:14px; margin-bottom:16px;">
+                <i class="bi bi-plus-circle"></i> 품목 추가
+            </button>
+
+            <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:#1E1B2E;">품목 목록</div>
+            <% if (items.isEmpty()) { %>
+                <div style="text-align:center; padding:30px 0; color:#8b87a3; font-size:12.5px;">등록된 품목이 없어요</div>
+            <% } else { for (InventoryItem it : items) {
+                boolean low = it.getQty() < it.getSafetyQty();
+                double ratio = it.getSafetyQty() <= 0 ? 1.0 : Math.min(1.0, it.getQty() / (it.getSafetyQty() * 2));
+                String barColor = low ? "#DC2626" : (ratio < 0.6 ? "#F59E0B" : "#16A34A");
+                String badgeText = low ? "부족" : (ratio < 0.6 ? "주의" : "정상");
+            %>
+                <div style="background:#fff; border-radius:12px; padding:13px 14px; margin-bottom:8px;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <b style="font-size:13.5px; color:#1E1B2E;"><%= it.getItemName() %></b>
+                        <span style="font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:10px; color:#fff; background:<%= barColor %>;"><%= badgeText %></span>
+                    </div>
+                    <div style="font-size:12px; color:#8b87a3; margin-bottom:6px;">현재 <%= it.getQty() %><%= it.getUnit() %> / 안전 <%= it.getSafetyQty() %><%= it.getUnit() %></div>
+                    <div style="width:100%; height:6px; background:#E5E7EB; border-radius:4px; overflow:hidden; margin-bottom:8px;">
+                        <div style="width:<%= (int)(ratio*100) %>%; height:100%; background:<%= barColor %>;"></div>
+                    </div>
+                    <form action="InventoryServlet" method="post" onsubmit="return confirm('<%= it.getItemName() %> 품목을 삭제할까요?');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="itemId" value="<%= it.getItemId() %>">
+                        <button type="submit" class="btn-moa-outline btn-moa-sm" style="color:#DC2626;">삭제</button>
+                    </form>
+                </div>
+            <% } } %>
+        </div>
+
+        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="invAddSheet" style="border-radius:20px 20px 0 0; max-height:85vh;">
+            <div class="offcanvas-header">
+                <h6 class="offcanvas-title"><i class="bi bi-plus-circle"></i> 품목 추가</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body">
+                <form action="InventoryServlet" method="post">
+                    <input type="hidden" name="action" value="add">
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">품목명</label><input type="text" name="itemName" class="form-control" required></div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label class="form-label" style="font-size:12px;">현재 수량</label><input type="number" step="0.1" name="qty" class="form-control" required></div>
+                        <div class="col-6"><label class="form-label" style="font-size:12px;">안전 수량</label><input type="number" step="0.1" name="safetyQty" class="form-control" required></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:12px;">단위</label>
+                        <select name="unit" class="form-control">
+                            <option value="개">개</option>
+                            <option value="수">수</option>
+                            <option value="ml">ml</option>
+                            <option value="L">L</option>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="박스">박스</option>
+                            <option value="봉">봉</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-moa w-100 justify-content-center">추가하기</button>
+                </form>
+            </div>
+        </div>
+        <script>
+            if (typeof bootstrap === 'undefined') {
+                document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></scr' + 'ipt>');
+            }
+        </script>
+    <% } else { %>
+        <!-- ===================== 기존 PC/웹 화면 ===================== -->
+        <div class="p-4">
         <h4 class="mb-4"><i class="bi bi-box-seam"></i> 재고 관리</h4>
 
         <div class="row g-3 mb-4">
@@ -117,6 +218,8 @@
                 </div>
             </div>
         </div>
+        </div>
+    <% } %>
     </main>
 </div>
 <jsp:include page="chat_widget.jsp" />
