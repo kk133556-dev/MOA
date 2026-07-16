@@ -26,9 +26,7 @@
     } catch (Exception ignore) { /* 예약 테이블이 아직 없어도 마이페이지는 정상 동작해야 해요 */ }
     String currentMenu = "home";
 
-    // 안드로이드 앱에서 왔는지 확인해서, 앱은 완전히 다른 카드형 대시보드를 보여줘요.
-    String ua = request.getHeader("User-Agent");
-    boolean isApp = ua != null && ua.contains("MOAApp");
+    // 안드로이드 앱에서 왔는지는 mypage_sidebar.jsp include에서 이미 ua/isApp을 선언해줘요 (아래에서 재사용).
     String memberName = String.valueOf(session.getAttribute("name"));
 %>
 <div class="d-flex">
