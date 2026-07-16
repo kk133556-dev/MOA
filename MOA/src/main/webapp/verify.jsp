@@ -17,6 +17,7 @@
         .verify-provider:hover, .verify-provider.selected { border-color:var(--primary); background:rgba(79,70,229,0.05); }
         .verify-provider .icon-badge { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; }
         .verify-provider .label { font-size:12px; font-weight:600; color:#374151; }
+        .rrn-input { text-align:center; letter-spacing:1px; }
     </style>
 </head>
 <body>
@@ -76,6 +77,57 @@
         </div>
     </div>
 
+    <!-- STEP 1.5: 본인정보 입력 (이름/생년월일/통신사/휴대폰번호 - 실제 PASS/통신사 인증 폼 방식) -->
+    <div id="stepInfo" style="display:none;">
+        <div class="moa-card">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-arrow-left" id="backBtnInfo" style="cursor:pointer; font-size:16px;"></i>
+                <span id="providerLabelInfo" style="font-size:13px; font-weight:700;"></span>
+            </div>
+            <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:16px;">본인 확인을 위해 아래 정보를 정확히 입력해주세요</p>
+
+            <div class="mb-2">
+                <label class="form-label" style="font-size:12px;">이름</label>
+                <input type="text" id="infoName" class="form-control" placeholder="홍길동">
+            </div>
+            <div class="mb-2">
+                <label class="form-label" style="font-size:12px;">생년월일 (6자리)</label>
+                <input type="text" id="infoBirth" class="form-control rrn-input" placeholder="예) 990101" maxlength="6" inputmode="numeric">
+            </div>
+            <div class="mb-2">
+                <label class="form-label" style="font-size:12px;">통신사</label>
+                <select id="infoCarrier" class="form-control">
+                    <option value="SKT">SKT</option>
+                    <option value="KT">KT</option>
+                    <option value="LGU+">LG U+</option>
+                    <option value="SKT 알뜰폰">SKT 알뜰폰</option>
+                    <option value="KT 알뜰폰">KT 알뜰폰</option>
+                    <option value="LGU+ 알뜰폰">LG U+ 알뜰폰</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" style="font-size:12px;">휴대폰 번호</label>
+                <input type="tel" id="infoPhone" class="form-control" placeholder="010-0000-0000">
+            </div>
+
+            <div style="background:#F9FAFB; border-radius:8px; padding:10px 12px; margin-bottom:16px;">
+                <label style="font-size:12px; display:flex; align-items:center; gap:6px; margin-bottom:6px; font-weight:600;">
+                    <input type="checkbox" id="agreeAll"> 전체 동의
+                </label>
+                <label style="font-size:11.5px; display:flex; align-items:center; gap:6px; margin-bottom:4px; color:var(--text-muted);">
+                    <input type="checkbox" class="agreeItem" required> 개인정보 수집·이용 동의 (필수)
+                </label>
+                <label style="font-size:11.5px; display:flex; align-items:center; gap:6px; color:var(--text-muted);">
+                    <input type="checkbox" class="agreeItem" required> 고유식별정보 처리 동의 (필수)
+                </label>
+            </div>
+
+            <button type="button" id="infoNextBtn" class="btn-moa w-100 justify-content-center">
+                <i class="bi bi-shield-check"></i> 인증 요청
+            </button>
+        </div>
+    </div>
+
     <!-- STEP 2: 휴대폰 인증번호 확인 (데모) -->
     <div id="step2" style="display:none;">
         <div class="moa-card">
@@ -83,14 +135,8 @@
                 <i class="bi bi-arrow-left" id="backBtn" style="cursor:pointer; font-size:16px;"></i>
                 <span id="providerLabel" style="font-size:13px; font-weight:700;"></span>
             </div>
-            <div class="mb-2">
-                <label class="form-label">휴대폰 번호</label>
-                <div class="d-flex gap-2">
-                    <input type="tel" id="phone" class="form-control" placeholder="010-0000-0000">
-                    <button type="button" id="sendBtn" class="btn-moa-outline">인증번호 받기</button>
-                </div>
-            </div>
-            <div id="codeBox" style="display:none;">
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">입력하신 번호로 인증번호를 보냈어요</p>
+            <div id="codeBox">
                 <div class="d-flex gap-2 mb-2">
                     <input type="text" id="code" class="form-control" placeholder="인증번호 6자리" maxlength="6">
                     <button type="button" id="confirmBtn" class="btn-moa">확인</button>
@@ -102,6 +148,8 @@
                 <input type="hidden" name="plan" value="<%= plan %>">
             </form>
         </div>
+    </div>
+
     <!-- STEP 3: 앱 푸시 인증 대기 (PASS/네이버/통신사PASS/국민인증서 - 실제 앱들처럼 문자 대신 푸시 승인 방식) -->
     <div id="step3" style="display:none;">
         <div class="moa-card text-center">
@@ -124,8 +172,10 @@
 
 <script>
     var step1 = document.getElementById('step1');
+    var stepInfo = document.getElementById('stepInfo');
     var step2 = document.getElementById('step2');
     var step3 = document.getElementById('step3');
+    var providerLabelInfo = document.getElementById('providerLabelInfo');
     var providerLabel = document.getElementById('providerLabel');
     var providerLabel3 = document.getElementById('providerLabel3');
     var pushIcon = document.getElementById('pushIcon');
@@ -133,29 +183,63 @@
     var pushDesc = document.getElementById('pushDesc');
     var pushTimerEl = document.getElementById('pushTimer');
     var pushTimerInterval = null;
+    var selectedProviderEl = null;
 
+    // STEP1: 인증수단 선택 -> STEP1.5(본인정보 입력)로
     document.querySelectorAll('.verify-provider').forEach(function (el) {
         el.addEventListener('click', function () {
             document.querySelectorAll('.verify-provider').forEach(function (p) { p.classList.remove('selected'); });
             el.classList.add('selected');
-            var mode = el.dataset.mode;
-            step1.style.display = 'none';
+            selectedProviderEl = el;
 
-            if (mode === 'push') {
-                providerLabel3.textContent = el.dataset.provider + ' 인증';
-                pushIcon.style.background = el.dataset.color;
-                pushIcon.innerHTML = el.querySelector('.icon-badge').innerHTML;
-                pushIcon.style.fontWeight = '800';
-                pushIcon.style.fontSize = '26px';
-                pushTitle.textContent = el.dataset.provider + ' 앱으로 인증 요청을 보냈어요';
-                pushDesc.textContent = el.dataset.provider + ' 앱을 열어 알림을 확인하고 본인 확인을 승인해주세요';
-                step3.style.display = 'block';
-                startPushTimer();
-            } else {
-                providerLabel.textContent = el.dataset.provider + '로 인증하기';
-                step2.style.display = 'block';
-            }
+            providerLabelInfo.textContent = el.dataset.provider + ' 본인 확인';
+            step1.style.display = 'none';
+            stepInfo.style.display = 'block';
         });
+    });
+
+    document.getElementById('backBtnInfo').addEventListener('click', function () {
+        stepInfo.style.display = 'none';
+        step1.style.display = 'block';
+    });
+
+    // 전체동의 체크박스
+    document.getElementById('agreeAll').addEventListener('change', function () {
+        var checked = this.checked;
+        document.querySelectorAll('.agreeItem').forEach(function (c) { c.checked = checked; });
+    });
+
+    // STEP1.5: 본인정보 입력 완료 -> 인증수단별로 STEP2(문자) 또는 STEP3(앱푸시)
+    document.getElementById('infoNextBtn').addEventListener('click', function () {
+        var name = document.getElementById('infoName').value.trim();
+        var birth = document.getElementById('infoBirth').value.trim();
+        var phone = document.getElementById('infoPhone').value.trim();
+        var agreedAll = Array.from(document.querySelectorAll('.agreeItem')).every(function (c) { return c.checked; });
+
+        if (!name) { alert('이름을 입력해주세요'); return; }
+        if (!/^[0-9]{6}$/.test(birth)) { alert('생년월일 6자리를 정확히 입력해주세요 (예: 990101)'); return; }
+        if (!phone) { alert('휴대폰 번호를 입력해주세요'); return; }
+        if (!agreedAll) { alert('필수 항목에 동의해주세요'); return; }
+
+        var el = selectedProviderEl;
+        var mode = el.dataset.mode;
+        stepInfo.style.display = 'none';
+
+        if (mode === 'push') {
+            providerLabel3.textContent = el.dataset.provider + ' 인증';
+            pushIcon.style.background = el.dataset.color;
+            pushIcon.innerHTML = el.querySelector('.icon-badge').innerHTML;
+            pushIcon.style.fontWeight = '800';
+            pushIcon.style.fontSize = '26px';
+            pushTitle.textContent = el.dataset.provider + ' 앱으로 인증 요청을 보냈어요';
+            pushDesc.textContent = name + '님, ' + el.dataset.provider + ' 앱을 열어 알림을 확인하고 승인해주세요';
+            step3.style.display = 'block';
+            startPushTimer();
+        } else {
+            providerLabel.textContent = el.dataset.provider + '로 인증하기';
+            step2.style.display = 'block';
+            sendSmsCode(phone);
+        }
     });
 
     function startPushTimer() {
@@ -178,24 +262,20 @@
     document.getElementById('backBtn3').addEventListener('click', function () {
         clearInterval(pushTimerInterval);
         step3.style.display = 'none';
-        step1.style.display = 'block';
+        stepInfo.style.display = 'block';
     });
 
     document.getElementById('backBtn').addEventListener('click', function () {
         step2.style.display = 'none';
-        step1.style.display = 'block';
-        document.getElementById('codeBox').style.display = 'none';
-        document.getElementById('phone').value = '';
+        stepInfo.style.display = 'block';
+        document.getElementById('code').value = '';
     });
 
     var demoCode = null;
-    document.getElementById('sendBtn').addEventListener('click', function () {
-        var phone = document.getElementById('phone').value.trim();
-        if (!phone) { alert('휴대폰 번호를 입력해주세요'); return; }
+    function sendSmsCode(phone) {
         demoCode = String(Math.floor(100000 + Math.random() * 900000));
-        document.getElementById('codeBox').style.display = 'block';
-        document.getElementById('msg').textContent = '인증번호를 보냈어요. (데모: ' + demoCode + ')';
-    });
+        document.getElementById('msg').textContent = phone + '로 인증번호를 보냈어요. (데모: ' + demoCode + ')';
+    }
     document.getElementById('confirmBtn').addEventListener('click', function () {
         var input = document.getElementById('code').value.trim();
         if (input === demoCode) {
