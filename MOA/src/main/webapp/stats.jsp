@@ -76,7 +76,7 @@
                             <div style="font-size:13px; font-weight:700; color:#9CA3AF;">데이터 없음</div>
                         <% } else { %>
                             <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전일 대비</div>
-                            <div style="font-size:15px; font-weight:800; color:<%= dailyChangeRate > 0 ? "#4ADE80" : (dailyChangeRate < 0 ? "#F87171" : "#9CA3AF") %>;">
+                            <div style="font-size:15px; font-weight:800; color:<%= dailyChangeRate > 0 ? "#F87171" : (dailyChangeRate < 0 ? "#60A5FA" : "#9CA3AF") %>;">
                                 <i class="bi bi-<%= dailyChangeRate > 0 ? "arrow-up-right" : (dailyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i> <%= String.format("%.1f", Math.abs(dailyChangeRate)) %>%
                             </div>
                         <% } %>
@@ -87,7 +87,7 @@
                             <div style="font-size:13px; font-weight:700; color:#9CA3AF;">데이터 없음</div>
                         <% } else { %>
                             <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전월 대비</div>
-                            <div style="font-size:15px; font-weight:800; color:<%= changeRate > 0 ? "#4ADE80" : (changeRate < 0 ? "#F87171" : "#9CA3AF") %>;">
+                            <div style="font-size:15px; font-weight:800; color:<%= changeRate > 0 ? "#F87171" : (changeRate < 0 ? "#60A5FA" : "#9CA3AF") %>;">
                                 <i class="bi bi-<%= changeRate > 0 ? "arrow-up-right" : (changeRate < 0 ? "arrow-down-right" : "dash") %>"></i> <%= String.format("%.1f", Math.abs(changeRate)) %>%
                             </div>
                         <% } %>
@@ -98,7 +98,7 @@
                             <div style="font-size:13px; font-weight:700; color:#9CA3AF;">데이터 없음</div>
                         <% } else { %>
                             <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">전년 대비</div>
-                            <div style="font-size:15px; font-weight:800; color:<%= yearlyChangeRate > 0 ? "#4ADE80" : (yearlyChangeRate < 0 ? "#F87171" : "#9CA3AF") %>;">
+                            <div style="font-size:15px; font-weight:800; color:<%= yearlyChangeRate > 0 ? "#F87171" : (yearlyChangeRate < 0 ? "#60A5FA" : "#9CA3AF") %>;">
                                 <i class="bi bi-<%= yearlyChangeRate > 0 ? "arrow-up-right" : (yearlyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i> <%= String.format("%.1f", Math.abs(yearlyChangeRate)) %>%
                             </div>
                         <% } %>
@@ -169,13 +169,13 @@
                             <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
                             <div class="kpi-label">전일 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">어제 기록 없음</span></div>
                         <% } else { %>
-                            <div class="kpi-value" style="color:<%= dailyChangeRate > 0 ? "#16A34A" : (dailyChangeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                            <div class="kpi-value" style="color:<%= dailyChangeRate > 0 ? "#DC2626" : (dailyChangeRate < 0 ? "#2563EB" : "#6B7280") %>;">
                                 <i class="bi bi-<%= dailyChangeRate > 0 ? "arrow-up-right" : (dailyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
                                 <%= String.format("%.1f", Math.abs(dailyChangeRate)) %>%
                             </div>
                             <div class="kpi-label">
                                 전일 대비
-                                <span class="badge" style="font-size:9.5px; background:<%= dailyChangeRate > 0 ? "#16A34A" : (dailyChangeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                                <span class="badge" style="font-size:9.5px; background:<%= dailyChangeRate > 0 ? "#DC2626" : (dailyChangeRate < 0 ? "#2563EB" : "#9CA3AF") %>; margin-left:2px;">
                                     <%= dailyChangeRate > 0 ? "▲ 상승" : (dailyChangeRate < 0 ? "▼ 하락" : "- 동일") %>
                                 </span>
                             </div>
@@ -186,13 +186,13 @@
                             <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
                             <div class="kpi-label">전월 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">지난달 기록 없음</span></div>
                         <% } else { %>
-                            <div class="kpi-value" style="color:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                            <div class="kpi-value" style="color:<%= changeRate > 0 ? "#DC2626" : (changeRate < 0 ? "#2563EB" : "#6B7280") %>;">
                                 <i class="bi bi-<%= changeRate > 0 ? "arrow-up-right" : (changeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
                                 <%= String.format("%.1f", Math.abs(changeRate)) %>%
                             </div>
                             <div class="kpi-label">
                                 전월 대비
-                                <span class="badge" style="font-size:9.5px; background:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                                <span class="badge" style="font-size:9.5px; background:<%= changeRate > 0 ? "#DC2626" : (changeRate < 0 ? "#2563EB" : "#9CA3AF") %>; margin-left:2px;">
                                     <%= changeRate > 0 ? "▲ 상승" : (changeRate < 0 ? "▼ 하락" : "- 동일") %>
                                 </span>
                             </div>
@@ -203,13 +203,13 @@
                             <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
                             <div class="kpi-label">전년 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">작년 기록 없음</span></div>
                         <% } else { %>
-                            <div class="kpi-value" style="color:<%= yearlyChangeRate > 0 ? "#16A34A" : (yearlyChangeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                            <div class="kpi-value" style="color:<%= yearlyChangeRate > 0 ? "#DC2626" : (yearlyChangeRate < 0 ? "#2563EB" : "#6B7280") %>;">
                                 <i class="bi bi-<%= yearlyChangeRate > 0 ? "arrow-up-right" : (yearlyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
                                 <%= String.format("%.1f", Math.abs(yearlyChangeRate)) %>%
                             </div>
                             <div class="kpi-label">
                                 전년 대비
-                                <span class="badge" style="font-size:9.5px; background:<%= yearlyChangeRate > 0 ? "#16A34A" : (yearlyChangeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                                <span class="badge" style="font-size:9.5px; background:<%= yearlyChangeRate > 0 ? "#DC2626" : (yearlyChangeRate < 0 ? "#2563EB" : "#9CA3AF") %>; margin-left:2px;">
                                     <%= yearlyChangeRate > 0 ? "▲ 상승" : (yearlyChangeRate < 0 ? "▼ 하락" : "- 동일") %>
                                 </span>
                             </div>

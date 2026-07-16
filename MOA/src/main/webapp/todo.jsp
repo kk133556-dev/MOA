@@ -4,10 +4,19 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>다이어리</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="css/style.css" rel="stylesheet">
+    <style>
+        .quick-add { font-size:11.5px; background:#F3F4F6; border:1px solid var(--border); padding:6px 10px; border-radius:14px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+        .quick-add:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .quick-add .quick-del { font-size:13px; opacity:0.6; }
+        .quick-add .quick-del:hover { opacity:1; color:#DC2626; }
+        .quick-add-new { font-size:11.5px; background:#fff; border:1.5px dashed var(--border); padding:6px 10px; border-radius:14px; cursor:pointer; color:var(--primary); font-weight:600; }
+        .quick-add-new:hover { border-color:var(--primary); background:rgba(79,70,229,0.05); }
+    </style>
 </head>
 <body>
 <%
@@ -23,7 +32,87 @@
 %>
 <div class="d-flex">
     <%@ include file="mypage_sidebar.jsp" %>
-    <main class="flex-grow-1 p-4">
+    <main class="flex-grow-1<%= isApp ? "" : " p-4" %>">
+    <% if (isApp) { %>
+        <!-- ===================== 앱 전용 다이어리 화면 ===================== -->
+        <div style="padding:18px 16px 24px; background:#F7F6FB; min-height:100vh;">
+            <div style="font-size:19px; font-weight:800; color:#1E1B2E; margin-bottom:16px;"><i class="bi bi-journal-check"></i> 다이어리</div>
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;">
+                <div style="background:#fff; border-radius:14px; padding:12px 6px; text-align:center;">
+                    <div style="font-size:10px; color:#8b87a3; margin-bottom:4px;">전체</div>
+                    <div style="font-size:15px; font-weight:800; color:#1E1B2E;" id="kpiTotal"><%= totalCount %></div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:12px 6px; text-align:center;">
+                    <div style="font-size:10px; color:#8b87a3; margin-bottom:4px;">완료</div>
+                    <div style="font-size:15px; font-weight:800; color:#16A34A;" id="kpiDone"><%= doneCount %></div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:12px 6px; text-align:center;">
+                    <div style="font-size:10px; color:#8b87a3; margin-bottom:4px;">미완료</div>
+                    <div style="font-size:15px; font-weight:800; color:#DC2626;" id="kpiPending"><%= totalCount - doneCount %></div>
+                </div>
+                <div style="background:#1E1B2E; border-radius:14px; padding:12px 6px; text-align:center;">
+                    <div style="font-size:10px; color:#a39fc0; margin-bottom:4px;">완료율</div>
+                    <div style="font-size:15px; font-weight:800; color:#fff;" id="kpiRate"><%= rate %>%</div>
+                </div>
+            </div>
+
+            <div class="progress mb-4" style="height:8px; border-radius:6px;">
+                <div class="progress-bar" id="progressBar" role="progressbar" style="width:<%= rate %>%; background:linear-gradient(135deg, #8B5CF6, #6366F1);"></div>
+            </div>
+
+            <button type="button" data-bs-toggle="offcanvas" data-bs-target="#todoAddSheet" style="width:100%; background:#8B5CF6; color:#fff; border:none; border-radius:14px; padding:14px; font-weight:700; font-size:14px; margin-bottom:18px;">
+                <i class="bi bi-plus-circle"></i> 할 일 추가
+            </button>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div style="font-size:13px; font-weight:700; color:#1E1B2E;">오늘의 체크리스트</div>
+                <div class="d-flex" style="background:#fff; border-radius:8px; padding:3px;">
+                    <div class="filter-tab active" data-filter="all" style="padding:5px 10px; border-radius:6px; cursor:pointer; font-size:11px; background:var(--navy); color:#fff;">전체</div>
+                    <div class="filter-tab" data-filter="pending" style="padding:5px 10px; border-radius:6px; cursor:pointer; font-size:11px; color:#374151;">미완료</div>
+                    <div class="filter-tab" data-filter="done" style="padding:5px 10px; border-radius:6px; cursor:pointer; font-size:11px; color:#374151;">완료</div>
+                </div>
+            </div>
+            <ul id="todoList" style="list-style:none; padding:0; margin:0;">
+                <% for (Todo t : todos) { %>
+                <li data-id="<%= t.getTodoId() %>" data-done="<%= t.isDone() %>" class="d-flex align-items-center gap-2" style="background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:8px;">
+                    <input type="checkbox" class="doneCheck" <%= t.isDone() ? "checked" : "" %> style="width:18px; height:18px;">
+                    <span style="flex:1; font-size:13px; <%= t.isDone() ? "text-decoration:line-through; color:#9ca3af;" : "color:#1E1B2E;" %>"><%= t.getContent() %></span>
+                    <i class="bi bi-trash delBtn" style="cursor:pointer; color:#DC2626;"></i>
+                </li>
+                <% } %>
+            </ul>
+            <p id="emptyMsg" style="<%= todos.isEmpty() ? "" : "display:none;" %> text-align:center; color:#8b87a3; font-size:12.5px; padding:20px 0;">할 일을 추가해보세요</p>
+        </div>
+
+        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="todoAddSheet" style="border-radius:20px 20px 0 0; max-height:85vh;">
+            <div class="offcanvas-header">
+                <h6 class="offcanvas-title"><i class="bi bi-plus-circle"></i> 할 일 추가</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body">
+                <input type="text" id="todoInput" class="form-control mb-2" placeholder="할 일을 입력하고 엔터">
+                <button id="addBtn" class="btn-moa w-100 justify-content-center mb-3">체크리스트에 추가</button>
+
+                <h6 class="mb-2" style="font-size:12.5px;"><i class="bi bi-lightning-charge"></i> 자주 쓰는 할 일</h6>
+                <div class="d-flex flex-wrap gap-2" id="quickList">
+                    <% for (QuickTodo q : quickTodos) { %>
+                    <span class="quick-add" data-id="<%= q.getQuickId() %>" data-text="<%= q.getLabel() %>">
+                        <%= q.getLabel() %> <i class="bi bi-x quick-del" data-id="<%= q.getQuickId() %>"></i>
+                    </span>
+                    <% } %>
+                    <span class="quick-add-new" id="quickAddNewBtn"><i class="bi bi-plus"></i> 새 항목</span>
+                </div>
+            </div>
+        </div>
+        <script>
+            if (typeof bootstrap === 'undefined') {
+                document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></scr' + 'ipt>');
+            }
+        </script>
+    <% } else { %>
+        <!-- ===================== 기존 PC/웹 화면 ===================== -->
+        <div class="p-4">
         <h4 class="mb-4"><i class="bi bi-journal-check"></i> 다이어리</h4>
 
         <div class="row g-3 mb-4">
@@ -86,17 +175,10 @@
                 </div>
             </div>
         </div>
+        </div>
+    <% } %>
     </main>
 </div>
-
-<style>
-    .quick-add { font-size:11.5px; background:#F3F4F6; border:1px solid var(--border); padding:6px 10px; border-radius:14px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
-    .quick-add:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
-    .quick-add .quick-del { font-size:13px; opacity:0.6; }
-    .quick-add .quick-del:hover { opacity:1; color:#DC2626; }
-    .quick-add-new { font-size:11.5px; background:#fff; border:1.5px dashed var(--border); padding:6px 10px; border-radius:14px; cursor:pointer; color:var(--primary); font-weight:600; }
-    .quick-add-new:hover { border-color:var(--primary); background:rgba(79,70,229,0.05); }
-</style>
 
 <script>
     var list = document.getElementById('todoList');
@@ -175,7 +257,9 @@
             .then(function (data) {
                 var li = document.createElement('li');
                 li.className = 'd-flex align-items-center gap-2';
-                li.style.cssText = 'padding:12px 4px; border-bottom:1px solid var(--border);';
+                li.style.cssText = list.closest('[id]') ? '' : '';
+                li.style.padding = '12px 4px';
+                li.style.borderBottom = '1px solid var(--border)';
                 li.dataset.id = data.todoId;
                 li.dataset.done = 'false';
                 li.innerHTML = '<input type="checkbox" class="doneCheck" style="width:18px; height:18px;">' +
@@ -196,7 +280,7 @@
 
     function bindQuickChip(chip) {
         chip.addEventListener('click', function (e) {
-            if (e.target.classList.contains('quick-del')) return; // x 클릭은 아래에서 따로 처리
+            if (e.target.classList.contains('quick-del')) return;
             addTodo(chip.dataset.text);
         });
         chip.querySelector('.quick-del').addEventListener('click', function (e) {
