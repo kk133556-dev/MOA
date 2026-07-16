@@ -213,6 +213,33 @@ public class SalesDAO {
         return 0;
     }
 
+    // 일별/연도별 비교(전일 대비, 전년 대비)를 위한 합계 조회예요.
+    public int sumByDate(int storeId, String yyyyMmDd) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(total_amount),0) FROM sales_records " +
+                     "WHERE store_id = ? AND sales_date = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            ps.setString(2, yyyyMmDd);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    public int sumByYear(int storeId, String yyyy) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(total_amount),0) FROM sales_records " +
+                     "WHERE store_id = ? AND DATE_FORMAT(sales_date, '%Y') = ?";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            ps.setString(2, yyyy);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
     // 회원 삭제 시 트랜잭션으로 같이 지우기 위한 메소드 - 외부에서 만든 Connection을 그대로 써요.
     public void deleteByStore(int storeId, Connection conn) throws SQLException {
         String sql = "DELETE FROM sales_records WHERE store_id = ?";

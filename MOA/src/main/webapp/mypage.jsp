@@ -35,14 +35,9 @@
     <% if (isApp) { %>
         <!-- ===================== 앱 전용 홈 대시보드 ===================== -->
         <div style="padding:18px 16px 24px; background:#F7F6FB; min-height:100vh;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <div style="font-size:19px; font-weight:800; color:#1E1B2E;"><%= session.getAttribute("storeName") %></div>
-                    <div style="font-size:12.5px; color:#8b87a3;"><%= memberName %>님, 안녕하세요</div>
-                </div>
-                <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#8B5CF6,#6366F1); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; flex-shrink:0;">
-                    <%= memberName.length() > 0 ? memberName.substring(0,1) : "M" %>
-                </div>
+            <div class="mb-3">
+                <div style="font-size:19px; font-weight:800; color:#1E1B2E;"><%= session.getAttribute("storeName") %></div>
+                <div style="font-size:12.5px; color:#8b87a3;"><%= memberName %>님, 안녕하세요</div>
             </div>
 
             <% if ("1".equals(request.getParameter("planUpdated"))) { %>

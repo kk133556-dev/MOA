@@ -30,13 +30,19 @@
     var send = document.getElementById('chatSend');
 
     var saved = localStorage.getItem('moaChatPos');
-    if (saved) {
+    var isAppUA = navigator.userAgent.indexOf('MOAApp') > -1;
+    if (isAppUA) {
+        // 앱에서는 하단탭바 위, 항상 같은 자리에 고정해요. (드래그로 저장된 예전 PC 위치를 쓰면 화면마다 위치가 들쭉날쭉해 보여서)
+        fab.style.right = '16px';
+        fab.style.bottom = '90px';
+    } else if (saved) {
         var pos = JSON.parse(saved);
         fab.style.right = pos.right + 'px';
         fab.style.bottom = pos.bottom + 'px';
     }
     var dragging = false, moved = false, startX, startY, startRight, startBottom;
     fab.addEventListener('mousedown', function (e) {
+        if (isAppUA) return; // 앱에서는 위치 고정, 드래그 비활성화
         dragging = true; moved = false;
         startX = e.clientX; startY = e.clientY;
         var rect = fab.getBoundingClientRect();

@@ -40,9 +40,9 @@
                     <div class="kpi-value my-2">무료</div>
                     <p style="font-size:13px;">기본 매출 기록</p>
                     <% if ("BASIC".equals(myPlan)) { %>
-                        <button class="btn-moa-outline w-100" disabled>현재 이용중</button>
+                        <button class="btn-moa-outline w-100 justify-content-center" disabled>현재 이용중</button>
                     <% } else { %>
-                        <button class="btn-moa-outline w-100" disabled>기본 제공</button>
+                        <button class="btn-moa-outline w-100 justify-content-center" disabled>기본 제공</button>
                     <% } %>
                 </div>
             </div>
@@ -52,9 +52,9 @@
                     <div class="kpi-value my-2">29,000원</div>
                     <p style="font-size:13px;">매출 통계 + 그래프</p>
                     <% if ("STANDARD".equals(myPlan)) { %>
-                        <button class="btn-moa-outline w-100" disabled>현재 이용중</button>
+                        <button class="btn-moa-outline w-100 justify-content-center" disabled>현재 이용중</button>
                     <% } else { %>
-                        <a href="verify.jsp?plan=STANDARD" class="btn-moa w-100">가입하기</a>
+                        <a href="verify.jsp?plan=STANDARD" class="btn-moa w-100 justify-content-center">가입하기</a>
                     <% } %>
                 </div>
             </div>
@@ -64,9 +64,9 @@
                     <div class="kpi-value my-2">59,000원</div>
                     <p style="font-size:13px;">광고 신청 + 우선지원</p>
                     <% if ("PRO".equals(myPlan)) { %>
-                        <button class="btn-moa-outline w-100" disabled>현재 이용중</button>
+                        <button class="btn-moa-outline w-100 justify-content-center" disabled>현재 이용중</button>
                     <% } else { %>
-                        <a href="verify.jsp?plan=PRO" class="btn-moa w-100">가입하기</a>
+                        <a href="verify.jsp?plan=PRO" class="btn-moa w-100 justify-content-center">가입하기</a>
                     <% } %>
                 </div>
             </div>

@@ -26,6 +26,20 @@
     int lastMonthTotal = dao.sumByMonth(storeId, lastMonth);
     double changeRate = lastMonthTotal == 0 ? 0 : ((double)(thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
     int grandTotal = dao.sumByStore(storeId);
+
+    // 일별 탭용: 오늘 vs 어제
+    String todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+    String yesterdayStr = LocalDate.now().minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
+    int todayTotal = dao.sumByDate(storeId, todayStr);
+    int yesterdayTotal = dao.sumByDate(storeId, yesterdayStr);
+    double dailyChangeRate = yesterdayTotal == 0 ? 0 : ((double)(todayTotal - yesterdayTotal) / yesterdayTotal) * 100;
+
+    // 연도별 탭용: 올해 vs 작년
+    String thisYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"));
+    String lastYear = LocalDate.now().minusYears(1).format(DateTimeFormatter.ofPattern("yyyy"));
+    int thisYearTotal = dao.sumByYear(storeId, thisYear);
+    int lastYearTotal = dao.sumByYear(storeId, lastYear);
+    double yearlyChangeRate = lastYearTotal == 0 ? 0 : ((double)(thisYearTotal - lastYearTotal) / lastYearTotal) * 100;
 %>
 <div class="d-flex">
     <%@ include file="mypage_sidebar.jsp" %>
@@ -44,21 +58,60 @@
             <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-value">₩ <%= String.format("%,d", lastMonthTotal) %></div><div class="kpi-label">지난 달 매출 (<%= lastMonth %>)</div></div></div>
             <div class="col-md-3 col-6">
                 <div class="kpi-card">
-                    <% if (lastMonthTotal == 0) { %>
-                        <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
-                        <div class="kpi-label">전월 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">지난달 기록 없음</span></div>
-                    <% } else { %>
-                        <div class="kpi-value" style="color:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#6B7280") %>;">
-                            <i class="bi bi-<%= changeRate > 0 ? "arrow-up-right" : (changeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
-                            <%= String.format("%.1f", Math.abs(changeRate)) %>%
-                        </div>
-                        <div class="kpi-label">
-                            전월 대비
-                            <span class="badge" style="font-size:9.5px; background:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
-                                <%= changeRate > 0 ? "▲ 상승" : (changeRate < 0 ? "▼ 하락" : "- 동일") %>
-                            </span>
-                        </div>
-                    <% } %>
+                    <!-- 일별 탭 선택 시: 전일 대비 -->
+                    <div id="compareDaily" style="display:none;">
+                        <% if (yesterdayTotal == 0) { %>
+                            <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
+                            <div class="kpi-label">전일 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">어제 기록 없음</span></div>
+                        <% } else { %>
+                            <div class="kpi-value" style="color:<%= dailyChangeRate > 0 ? "#16A34A" : (dailyChangeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                                <i class="bi bi-<%= dailyChangeRate > 0 ? "arrow-up-right" : (dailyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
+                                <%= String.format("%.1f", Math.abs(dailyChangeRate)) %>%
+                            </div>
+                            <div class="kpi-label">
+                                전일 대비
+                                <span class="badge" style="font-size:9.5px; background:<%= dailyChangeRate > 0 ? "#16A34A" : (dailyChangeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                                    <%= dailyChangeRate > 0 ? "▲ 상승" : (dailyChangeRate < 0 ? "▼ 하락" : "- 동일") %>
+                                </span>
+                            </div>
+                        <% } %>
+                    </div>
+                    <!-- 월별 탭 선택 시: 전월 대비 -->
+                    <div id="compareMonthly" style="display:none;">
+                        <% if (lastMonthTotal == 0) { %>
+                            <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
+                            <div class="kpi-label">전월 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">지난달 기록 없음</span></div>
+                        <% } else { %>
+                            <div class="kpi-value" style="color:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                                <i class="bi bi-<%= changeRate > 0 ? "arrow-up-right" : (changeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
+                                <%= String.format("%.1f", Math.abs(changeRate)) %>%
+                            </div>
+                            <div class="kpi-label">
+                                전월 대비
+                                <span class="badge" style="font-size:9.5px; background:<%= changeRate > 0 ? "#16A34A" : (changeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                                    <%= changeRate > 0 ? "▲ 상승" : (changeRate < 0 ? "▼ 하락" : "- 동일") %>
+                                </span>
+                            </div>
+                        <% } %>
+                    </div>
+                    <!-- 연도별 탭 선택 시: 전년 대비 -->
+                    <div id="compareYearly" style="display:none;">
+                        <% if (lastYearTotal == 0) { %>
+                            <div class="kpi-value" style="color:#9CA3AF; font-size:16px;">비교 데이터 없음</div>
+                            <div class="kpi-label">전년 대비 <span class="badge" style="font-size:9.5px; background:#9CA3AF; margin-left:2px;">작년 기록 없음</span></div>
+                        <% } else { %>
+                            <div class="kpi-value" style="color:<%= yearlyChangeRate > 0 ? "#16A34A" : (yearlyChangeRate < 0 ? "#DC2626" : "#6B7280") %>;">
+                                <i class="bi bi-<%= yearlyChangeRate > 0 ? "arrow-up-right" : (yearlyChangeRate < 0 ? "arrow-down-right" : "dash") %>"></i>
+                                <%= String.format("%.1f", Math.abs(yearlyChangeRate)) %>%
+                            </div>
+                            <div class="kpi-label">
+                                전년 대비
+                                <span class="badge" style="font-size:9.5px; background:<%= yearlyChangeRate > 0 ? "#16A34A" : (yearlyChangeRate < 0 ? "#DC2626" : "#9CA3AF") %>; margin-left:2px;">
+                                    <%= yearlyChangeRate > 0 ? "▲ 상승" : (yearlyChangeRate < 0 ? "▼ 하락" : "- 동일") %>
+                                </span>
+                            </div>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,6 +205,9 @@
     var tabDaily = document.getElementById('tabDaily');
     var tabMonthly = document.getElementById('tabMonthly');
     var tabYearly = document.getElementById('tabYearly');
+    var compareDaily = document.getElementById('compareDaily');
+    var compareMonthly = document.getElementById('compareMonthly');
+    var compareYearly = document.getElementById('compareYearly');
     function activate(tab) {
         [tabDaily, tabMonthly, tabYearly].forEach(function (t) {
             t.classList.remove('active');
@@ -159,6 +215,11 @@
         });
         tab.classList.add('active');
         tab.style.background = 'var(--navy)'; tab.style.color = '#fff';
+
+        // 선택한 기간에 맞는 비교 카드(전일/전월/전년 대비)만 보여줘요.
+        [compareDaily, compareMonthly, compareYearly].forEach(function (c) { if (c) c.style.display = 'none'; });
+        var toShow = tab === tabDaily ? compareDaily : (tab === tabYearly ? compareYearly : compareMonthly);
+        if (toShow) toShow.style.display = 'block';
     }
 
     var ctx = document.getElementById('statsChart');
@@ -183,6 +244,8 @@
         if (defaultTab === 'monthly') activate(tabMonthly);
         else if (defaultTab === 'yearly') activate(tabYearly);
         else activate(tabDaily);
+    } else if (compareMonthly) {
+        compareMonthly.style.display = 'block';
     }
 
     if (tabDaily) tabDaily.addEventListener('click', function () {
