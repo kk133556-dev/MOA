@@ -16,7 +16,50 @@
     String ctaHref = loggedIn ? (isAdmin ? "admin_main.jsp" : "mypage.jsp") : "signup.jsp";
     String ctaText = loggedIn ? (isAdmin ? "관리자 콘솔로 이동" : "마이페이지로 이동") : "무료로 시작하기";
     List<Ad> ads = new AdDAO().listApproved();
+
+    // 안드로이드 앱(WebView)에서 온 요청인지 확인해서, 앱에서는 마케팅용 랜딩페이지 대신
+    // 로그인한 사람은 곧장 마이페이지로, 안 한 사람은 로그인만 있는 심플한 화면을 보여줘요.
+    String ua = request.getHeader("User-Agent");
+    boolean isApp = ua != null && ua.contains("MOAApp");
+    if (isApp && loggedIn) {
+        response.sendRedirect(isAdmin ? "admin_main.jsp" : "mypage.jsp");
+        return;
+    }
 %>
+
+<% if (isApp) { %>
+    <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 28px; background:var(--navy);">
+        <div style="text-align:center; margin-bottom:34px;">
+            <div style="color:#fff; font-weight:800; font-size:30px; letter-spacing:0.5px;">MOA</div>
+            <div style="color:#8b87a3; font-size:12.5px; margin-top:6px;">소상공인 매출 관리 플랫폼</div>
+        </div>
+        <div style="width:100%; max-width:340px; background:#fff; border-radius:16px; padding:26px 22px;">
+            <h6 style="font-weight:700; margin-bottom:16px;"><i class="bi bi-box-arrow-in-right"></i> 로그인</h6>
+            <form action="LoginServlet" method="post">
+                <input type="hidden" name="loginType" value="BUSINESS">
+                <div class="mb-2"><label class="form-label" style="font-size:12.5px;">아이디</label><input type="text" name="userId" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label" style="font-size:12.5px;">비밀번호</label><input type="password" name="userPw" class="form-control" required></div>
+                <button type="submit" class="btn-moa w-100 justify-content-center">로그인</button>
+            </form>
+            <div class="d-flex justify-content-between mt-3" style="font-size:12px;">
+                <a href="signup.jsp" class="text-decoration-none">회원가입</a>
+                <a href="login.jsp?role=ADMIN" class="text-decoration-none text-muted">관리자 로그인</a>
+            </div>
+        </div>
+        <% if ("1".equals(request.getParameter("error"))) { %>
+            <div style="color:#f87171; font-size:12.5px; margin-top:16px;"><i class="bi bi-exclamation-circle-fill"></i> 아이디 또는 비밀번호가 올바르지 않아요.</div>
+        <% } %>
+        <% if ("1".equals(request.getParameter("pending"))) { %>
+            <div style="color:#fbbf24; font-size:12.5px; margin-top:16px; text-align:center;"><i class="bi bi-hourglass-split"></i> 아직 관리자 승인 대기중인 계정이에요.</div>
+        <% } %>
+        <% if ("1".equals(request.getParameter("suspended"))) { %>
+            <div style="color:#f87171; font-size:12.5px; margin-top:16px;"><i class="bi bi-slash-circle"></i> 이용이 정지된 계정이에요. 고객센터로 문의해주세요.</div>
+        <% } %>
+    </div>
+    </body>
+    </html>
+    <% return; %>
+<% } %>
 
 <nav class="navbar navbar-light bg-white sticky-top" id="mainNav">
     <div class="container">
