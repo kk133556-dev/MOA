@@ -28,7 +28,6 @@
         .ai-title { font-size:17px; font-weight:800; margin:0; }
         .ai-subtitle { font-size:11.5px; color:#a39fc0; margin-top:2px; display:flex; align-items:center; gap:5px; }
         .ai-status-dot { width:6px; height:6px; border-radius:50%; background:#34D399; display:inline-block; box-shadow:0 0 0 2px rgba(52,211,153,0.25); }
-        .ai-back { position:relative; z-index:1; color:#fff; text-decoration:none; font-size:20px; opacity:0.85; flex-shrink:0; }
 
         .ai-body { flex:1; overflow-y:auto; padding:18px 16px; display:flex; flex-direction:column; gap:10px; -webkit-overflow-scrolling:touch; }
         .ai-bubble { max-width:82%; padding:10px 14px; border-radius:16px; font-size:13.5px; line-height:1.5; }
@@ -65,7 +64,6 @@
 
 <div class="ai-header">
     <div class="ai-header-row">
-        <a href="mypage.jsp" class="ai-back"><i class="bi bi-arrow-left"></i></a>
         <div class="ai-avatar"><i class="bi bi-stars"></i></div>
         <div>
             <p class="ai-title">MOA AI 비서</p>
