@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.List, java.util.ArrayList, com.moa.dao.SalesDAO, com.moa.model.SalesRecord, com.moa.dao.ReservationDAO, com.moa.model.Reservation, java.time.LocalDate"%>
+<%@ page import="java.util.List, java.util.ArrayList, com.moa.dao.SalesDAO, com.moa.model.SalesRecord, com.moa.dao.ReservationDAO, com.moa.model.Reservation, java.time.LocalDate, com.moa.dao.AdDAO, com.moa.model.Ad, com.moa.dao.TodoDAO, com.moa.model.Todo"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -26,6 +26,17 @@
         }
     } catch (Exception ignore) { /* 예약 테이블이 아직 없어도 마이페이지는 정상 동작해야 해요 */ }
     String currentMenu = "home";
+
+    // 홈 화면에 보여줄 광고 배너 + 다이어리 미리보기
+    List<Ad> homeAds = new ArrayList<>();
+    try { homeAds = new AdDAO().listApproved(); } catch (Exception ignore) {}
+    List<Todo> homeTodos = new ArrayList<>();
+    try {
+        for (Todo t : new TodoDAO().listByStore(storeId)) {
+            if (!t.isDone()) homeTodos.add(t);
+            if (homeTodos.size() >= 3) break;
+        }
+    } catch (Exception ignore) {}
 
     // 안드로이드 앱에서 왔는지는 mypage_sidebar.jsp include에서 이미 ua/isApp을 선언해줘요 (아래에서 재사용).
     String memberName = String.valueOf(session.getAttribute("name"));
@@ -118,12 +129,43 @@
                         <div style="font-size:12px; color:#8b87a3;"><%= r.getSalesDate() %></div>
                         <div style="font-size:14px; font-weight:700; color:#1E1B2E;">₩<%= String.format("%,d", r.getTotalAmount()) %></div>
                     </div>
-                    <% if (r.getReceiptImage() != null) { %><i class="bi bi-image" style="color:#8B5CF6; font-size:16px;"></i><% } %>
+                    <div class="d-flex align-items-center gap-2">
+                        <% if (r.getReceiptImage() != null) { %><i class="bi bi-image" style="color:#8B5CF6; font-size:16px;"></i><% } %>
+                        <form action="SalesDeleteServlet" method="post" onsubmit="return confirm('이 매출 기록을 삭제할까요?');">
+                            <input type="hidden" name="action" value="deleteSelected">
+                            <input type="hidden" name="returnTo" value="mypage.jsp">
+                            <input type="hidden" name="salesId" value="<%= r.getSalesId() %>">
+                            <button type="submit" style="background:none; border:none; color:#DC2626; font-size:15px; padding:0;"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
                 </div>
             <% } } %>
             <% if (salesList.size() > 5) { %>
                 <a href="stats.jsp" style="display:block; text-align:center; font-size:12.5px; font-weight:600; margin-top:8px; color:#8B5CF6;">전체 기록 보기 →</a>
             <% } %>
+
+            <% if (!homeAds.isEmpty()) { %>
+            <div style="background:linear-gradient(135deg,#1E1B2E,#332D52); border-radius:16px; padding:16px; margin-top:16px; color:#fff;">
+                <div style="font-size:11px; color:#a39fc0; margin-bottom:8px; display:flex; align-items:center; gap:5px;"><span style="width:6px; height:6px; border-radius:50%; background:#34D399; display:inline-block;"></span> 실시간 매장 소식</div>
+                <% Ad homeAd = homeAds.get((int)(System.currentTimeMillis() / 5000) % homeAds.size()); %>
+                <div style="font-size:13px; font-weight:700;"><i class="bi bi-shop"></i> <%= homeAd.getStoreName() %></div>
+                <div style="font-size:12px; color:#c4c1d6; margin-top:3px;"><%= homeAd.getBannerText() %></div>
+            </div>
+            <% } %>
+
+            <div style="background:#fff; border-radius:16px; padding:16px; margin-top:16px;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div style="font-size:13px; font-weight:700; color:#1E1B2E;"><i class="bi bi-journal-check"></i> 다이어리</div>
+                    <a href="todo.jsp" style="font-size:11.5px; color:#8B5CF6; font-weight:600; text-decoration:none;">전체보기 →</a>
+                </div>
+                <% if (homeTodos.isEmpty()) { %>
+                    <div style="text-align:center; padding:14px 0; color:#8b87a3; font-size:12.5px;">할 일을 등록해보세요</div>
+                <% } else { for (Todo t : homeTodos) { %>
+                    <div style="display:flex; align-items:center; gap:8px; padding:7px 0; font-size:12.5px; color:#374151;">
+                        <i class="bi bi-circle" style="color:#D1D5DB; font-size:11px;"></i> <%= t.getContent() %>
+                    </div>
+                <% } } %>
+            </div>
         </div>
 
         <!-- 매출등록 바텀시트 (앱 전용) -->
