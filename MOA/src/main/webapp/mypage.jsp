@@ -25,13 +25,141 @@
         }
     } catch (Exception ignore) { /* 예약 테이블이 아직 없어도 마이페이지는 정상 동작해야 해요 */ }
     String currentMenu = "home";
+
+    // 안드로이드 앱에서 왔는지 확인해서, 앱은 완전히 다른 카드형 대시보드를 보여줘요.
+    String ua = request.getHeader("User-Agent");
+    boolean isApp = ua != null && ua.contains("MOAApp");
+    String memberName = String.valueOf(session.getAttribute("name"));
 %>
 <div class="d-flex">
     <%@ include file="mypage_sidebar.jsp" %>
-    <main class="flex-grow-1 p-4">
+    <main class="flex-grow-1<%= isApp ? "" : " p-4" %>">
+    <% if (isApp) { %>
+        <!-- ===================== 앱 전용 홈 대시보드 ===================== -->
+        <div style="padding:18px 16px 24px; background:#F7F6FB; min-height:100vh;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div style="font-size:19px; font-weight:800; color:#1E1B2E;"><%= session.getAttribute("storeName") %></div>
+                    <div style="font-size:12.5px; color:#8b87a3;"><%= memberName %>님, 안녕하세요</div>
+                </div>
+                <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#8B5CF6,#6366F1); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; flex-shrink:0;">
+                    <%= memberName.length() > 0 ? memberName.substring(0,1) : "M" %>
+                </div>
+            </div>
+
+            <% if ("1".equals(request.getParameter("planUpdated"))) { %>
+                <div class="alert alert-success py-2" style="font-size:12.5px; border-radius:12px;"><i class="bi bi-check-circle"></i> 요금제가 변경됐어요!</div>
+            <% } %>
+
+            <% if (!soonReservations.isEmpty()) { %>
+            <div style="background:linear-gradient(135deg,#8B5CF6,#6366F1); border-radius:16px; padding:14px 16px; color:#fff; margin-bottom:14px;">
+                <div style="font-size:13px; font-weight:700;"><i class="bi bi-bell-fill"></i> 다가오는 예약 <%= soonReservations.size() %>건</div>
+                <div style="font-size:11.5px; opacity:0.92; margin-top:5px; line-height:1.6;">
+                    <% for (int i = 0; i < Math.min(2, soonReservations.size()); i++) { Reservation r = soonReservations.get(i); %>
+                        <%= r.getReservationDate() %> <%= r.getReservationTime() %> · <%= r.getCustomerName() %>님 <%= r.getPartySize() %>명<br>
+                    <% } %>
+                </div>
+                <a href="reservation.jsp" style="display:inline-block; margin-top:9px; background:rgba(255,255,255,0.22); color:#fff; padding:7px 13px; border-radius:9px; font-size:11.5px; text-decoration:none; font-weight:600;">예약 확인하기 →</a>
+            </div>
+            <% } %>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">누적 매출</div>
+                    <div style="font-size:16px; font-weight:800; color:#1E1B2E;">₩<%= String.format("%,d", total) %></div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">등록 건수</div>
+                    <div style="font-size:16px; font-weight:800; color:#1E1B2E;"><%= salesList.size() %>건</div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:14px;">
+                    <div style="font-size:11px; color:#8b87a3; margin-bottom:5px;">현재 요금제</div>
+                    <div style="font-size:16px; font-weight:800; color:#1E1B2E;"><%= session.getAttribute("plan") != null ? session.getAttribute("plan") : "BASIC" %></div>
+                </div>
+                <a href="stats.jsp" style="background:#1E1B2E; border-radius:14px; padding:14px; text-decoration:none; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="font-size:11px; color:#a39fc0; margin-bottom:5px;">통계 자세히</div>
+                    <div style="font-size:15px; font-weight:800; color:#fff;"><i class="bi bi-bar-chart"></i> 보러가기</div>
+                </a>
+            </div>
+
+            <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:#1E1B2E;">빠른 메뉴</div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:22px; text-align:center;">
+                <a href="ai_receipt.jsp" style="text-decoration:none; color:inherit;">
+                    <div style="width:48px; height:48px; border-radius:14px; background:#F3F0FF; display:flex; align-items:center; justify-content:center; margin:0 auto 6px;"><i class="bi bi-camera" style="color:#8B5CF6; font-size:19px;"></i></div>
+                    <div style="font-size:10.5px; color:#1E1B2E;">영수증</div>
+                </a>
+                <a href="inventory.jsp" style="text-decoration:none; color:inherit;">
+                    <div style="width:48px; height:48px; border-radius:14px; background:#EFF6FF; display:flex; align-items:center; justify-content:center; margin:0 auto 6px;"><i class="bi bi-box-seam" style="color:#3B82F6; font-size:19px;"></i></div>
+                    <div style="font-size:10.5px; color:#1E1B2E;">재고</div>
+                </a>
+                <a href="staff.jsp" style="text-decoration:none; color:inherit;">
+                    <div style="width:48px; height:48px; border-radius:14px; background:#F0FDF4; display:flex; align-items:center; justify-content:center; margin:0 auto 6px;"><i class="bi bi-people" style="color:#22C55E; font-size:19px;"></i></div>
+                    <div style="font-size:10.5px; color:#1E1B2E;">직원</div>
+                </a>
+                <a href="todo.jsp" style="text-decoration:none; color:inherit;">
+                    <div style="width:48px; height:48px; border-radius:14px; background:#FFF7ED; display:flex; align-items:center; justify-content:center; margin:0 auto 6px;"><i class="bi bi-journal-check" style="color:#F97316; font-size:19px;"></i></div>
+                    <div style="font-size:10.5px; color:#1E1B2E;">다이어리</div>
+                </a>
+            </div>
+
+            <button type="button" data-bs-toggle="offcanvas" data-bs-target="#salesAddSheet" style="width:100%; background:#8B5CF6; color:#fff; border:none; border-radius:14px; padding:14px; font-weight:700; font-size:14px; margin-bottom:20px;">
+                <i class="bi bi-plus-circle"></i> 오늘 매출 등록
+            </button>
+
+            <div style="background:#fff; border-radius:16px; padding:16px; margin-bottom:16px;">
+                <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:#1E1B2E;"><i class="bi bi-graph-up"></i> 최근 매출 추이</div>
+                <% if (salesList.isEmpty()) { %>
+                    <div style="text-align:center; padding:30px 0; color:#8b87a3; font-size:12.5px;">아직 등록된 매출이 없어요</div>
+                <% } else { %>
+                    <div style="position:relative; height:180px;"><canvas id="salesChart"></canvas></div>
+                <% } %>
+            </div>
+
+            <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:#1E1B2E;">최근 매출 기록</div>
+            <% if (salesList.isEmpty()) { %>
+                <div style="text-align:center; padding:20px 0; color:#8b87a3; font-size:12.5px;">등록된 기록이 없어요</div>
+            <% } else { for (int i = 0; i < Math.min(5, salesList.size()); i++) { SalesRecord r = salesList.get(i); %>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:8px;">
+                    <div>
+                        <div style="font-size:12px; color:#8b87a3;"><%= r.getSalesDate() %></div>
+                        <div style="font-size:14px; font-weight:700; color:#1E1B2E;">₩<%= String.format("%,d", r.getTotalAmount()) %></div>
+                    </div>
+                    <% if (r.getReceiptImage() != null) { %><i class="bi bi-image" style="color:#8B5CF6; font-size:16px;"></i><% } %>
+                </div>
+            <% } } %>
+            <% if (salesList.size() > 5) { %>
+                <a href="stats.jsp" style="display:block; text-align:center; font-size:12.5px; font-weight:600; margin-top:8px; color:#8B5CF6;">전체 기록 보기 →</a>
+            <% } %>
+        </div>
+
+        <!-- 매출등록 바텀시트 (앱 전용) -->
+        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="salesAddSheet" style="border-radius:20px 20px 0 0; max-height:85vh;">
+            <div class="offcanvas-header">
+                <h6 class="offcanvas-title"><i class="bi bi-plus-circle"></i> 오늘 매출 등록</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body">
+                <form action="SalesServlet" method="post">
+                    <div class="mb-2"><label class="form-label">총 매출</label><input type="number" name="total" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label">카드 매출</label><input type="number" name="card" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label">현금 매출</label><input type="number" name="cash" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">주류매출</label><input type="number" name="liquor" class="form-control form-control-sm" placeholder="0"></div>
+                    <div class="mb-2"><label class="form-label" style="font-size:12px;">수수료</label><input type="number" name="fee" class="form-control form-control-sm" placeholder="0"></div>
+                    <div class="mb-3"><label class="form-label" style="font-size:12px;">기타지출</label><input type="number" name="other" class="form-control form-control-sm" placeholder="0"></div>
+                    <button type="submit" class="btn-moa w-100 justify-content-center">저장</button>
+                </form>
+            </div>
+        </div>
+        <script>
+            if (typeof bootstrap === 'undefined') {
+                document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></scr' + 'ipt>');
+            }
+        </script>
+    <% } else { %>
+        <!-- ===================== 기존 PC/웹 대시보드 ===================== -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0"><%= session.getAttribute("storeName") %> 마이페이지</h4>
-            <div><%= session.getAttribute("name") %>님</div>
+            <div><%= memberName %>님</div>
         </div>
 
         <% if ("1".equals(request.getParameter("planUpdated"))) { %>
@@ -137,6 +265,7 @@
                 <div class="text-end"><a href="stats.jsp" style="font-size:12.5px;">전체 기록 보기 →</a></div>
             <% } %>
         </div>
+    <% } %>
     </main>
 </div>
 
@@ -184,6 +313,7 @@
     var deleteAction = document.getElementById('salesDeleteAction');
 
     function updateSelectedBtn() {
+        if (!btnDeleteSelected) return;
         var anyChecked = Array.from(rowChecks).some(function (c) { return c.checked; });
         btnDeleteSelected.disabled = !anyChecked;
     }
