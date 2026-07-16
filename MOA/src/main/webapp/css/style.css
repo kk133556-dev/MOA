@@ -74,6 +74,18 @@ table.moa-table th { background: #F9FAFB; font-size: 11.5px; color: var(--text-m
 .offcanvas { z-index: 1200 !important; }
 .offcanvas-backdrop { z-index: 1150 !important; }
 .offcanvas-backdrop.show { opacity: 0.5 !important; }
+
+/* 내용이 짧아도 시트가 화면의 최소 절반은 차지하게 (너무 작게 뜨는 느낌 방지) */
+.offcanvas.offcanvas-bottom {
+    min-height: 50vh;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+.offcanvas.offcanvas-bottom .offcanvas-body {
+    overflow-y: auto;
+    flex: 1;
+}
 @media (max-width: 991px) { .hero-bg-icon { display:none; } }
 .hero-pro .grad-text { color: var(--primary); }
 .hero-pro p.lead { color:var(--text-muted); font-size:15px; margin-top:12px; line-height:1.6; }
