@@ -58,8 +58,10 @@
     </div>
     </body>
     </html>
-    <% return; %>
-<% } %>
+<%
+        return;
+    }
+%>
 
 <nav class="navbar navbar-light bg-white sticky-top" id="mainNav">
     <div class="container">
