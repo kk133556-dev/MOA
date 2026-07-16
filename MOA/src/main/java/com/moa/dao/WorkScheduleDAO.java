@@ -26,6 +26,23 @@ public class WorkScheduleDAO {
         return list;
     }
 
+    // 특정 날짜(yyyy-MM-dd)의 근무자만 뽑아요. 챗봇이 "오늘 누가 출근이야?" 같은 질문에 답할 때 써요.
+    public List<WorkSchedule> listByDate(int storeId, String workDate) throws SQLException {
+        List<WorkSchedule> list = new ArrayList<>();
+        String sql = "SELECT ws.*, e.name AS employee_name, e.role AS employee_role " +
+                     "FROM work_schedules ws JOIN employees e ON ws.employee_id = e.employee_id " +
+                     "WHERE ws.store_id = ? AND ws.work_date = ? " +
+                     "ORDER BY ws.shift_start ASC";
+        try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, storeId);
+            ps.setString(2, workDate);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(map(rs));
+            }
+        }
+        return list;
+    }
+
     public int insert(int storeId, int employeeId, String workDate, String shiftStart, String shiftEnd, String memo) throws SQLException {
         String sql = "INSERT INTO work_schedules (store_id, employee_id, work_date, shift_start, shift_end, memo) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
