@@ -38,7 +38,7 @@
             <div class="row g-2">
                 <div class="col-4">
                     <div class="verify-provider" data-provider="PASS" data-mode="push" data-color="#FF5D3B">
-                        <div class="icon-badge" style="background:#FF5D3B;"><i class="bi bi-phone"></i></div>
+                        <div class="icon-badge" style="background:#FF5D3B;"><i class="bi bi-patch-check-fill"></i></div>
                         <span class="label">PASS</span>
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                 </div>
                 <div class="col-4">
                     <div class="verify-provider" data-provider="네이버" data-mode="push" data-color="#03C75A">
-                        <div class="icon-badge" style="background:#03C75A;"><i class="bi bi-n"></i></div>
+                        <div class="icon-badge" style="background:#03C75A; font-weight:800; font-size:20px;">N</div>
                         <span class="label">네이버</span>
                     </div>
                 </div>
@@ -144,7 +144,9 @@
             if (mode === 'push') {
                 providerLabel3.textContent = el.dataset.provider + ' 인증';
                 pushIcon.style.background = el.dataset.color;
-                pushIcon.innerHTML = el.querySelector('.icon-badge i').outerHTML;
+                pushIcon.innerHTML = el.querySelector('.icon-badge').innerHTML;
+                pushIcon.style.fontWeight = '800';
+                pushIcon.style.fontSize = '26px';
                 pushTitle.textContent = el.dataset.provider + ' 앱으로 인증 요청을 보냈어요';
                 pushDesc.textContent = el.dataset.provider + ' 앱을 열어 알림을 확인하고 본인 확인을 승인해주세요';
                 step3.style.display = 'block';

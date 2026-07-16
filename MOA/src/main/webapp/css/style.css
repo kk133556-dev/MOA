@@ -68,6 +68,12 @@ table.moa-table th { background: #F9FAFB; font-size: 11.5px; color: var(--text-m
 
 /* 히어로 배경에 은은하게 깔리는 대형 아이콘 - 텍스트/패널 사이 빈 공간을 시각적으로 채워줘요 */
 .hero-bg-icon { position:absolute; right:-40px; top:50%; transform:translateY(-50%) rotate(-12deg); font-size:420px; color:var(--primary); opacity:0.05; z-index:0; pointer-events:none; }
+
+/* 앱 전체 바텀시트(offcanvas)들이 하단 탭바(z-index:1050)한테 가려서 잘려보이던 문제 수정.
+   부트스트랩 기본 offcanvas z-index(1045)가 우리 하단탭바보다 낮아서 생겼던 버그예요. */
+.offcanvas { z-index: 1200 !important; }
+.offcanvas-backdrop { z-index: 1150 !important; }
+.offcanvas-backdrop.show { opacity: 0.5 !important; }
 @media (max-width: 991px) { .hero-bg-icon { display:none; } }
 .hero-pro .grad-text { color: var(--primary); }
 .hero-pro p.lead { color:var(--text-muted); font-size:15px; margin-top:12px; line-height:1.6; }
