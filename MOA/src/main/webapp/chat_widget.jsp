@@ -32,14 +32,16 @@
     var saved = localStorage.getItem('moaChatPos');
     var isAppUA = navigator.userAgent.indexOf('MOAApp') > -1;
     if (isAppUA) {
-        // 앱에서는 하단탭바 위, 항상 같은 자리에 고정해요. (드래그로 저장된 예전 PC 위치를 쓰면 화면마다 위치가 들쭉날쭉해 보여서)
-        fab.style.right = '16px';
-        fab.style.bottom = '90px';
+        // 앱에서는 상단 툴바의 AI비서 버튼으로만 열어요. 화면 위에 떠다니는 동그란 버튼은 필요 없어서 숨겨요.
+        fab.style.display = 'none';
     } else if (saved) {
         var pos = JSON.parse(saved);
         fab.style.right = pos.right + 'px';
         fab.style.bottom = pos.bottom + 'px';
     }
+
+    // 안드로이드 앱의 상단 툴바 "AI비서" 버튼이 이 함수를 호출해서 챗봇 패널을 열어요.
+    window.openMoaChat = function () { panel.classList.add('open'); };
     var dragging = false, moved = false, startX, startY, startRight, startBottom;
     fab.addEventListener('mousedown', function (e) {
         if (isAppUA) return; // 앱에서는 위치 고정, 드래그 비활성화
